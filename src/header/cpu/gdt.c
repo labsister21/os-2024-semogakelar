@@ -63,3 +63,8 @@ struct GlobalDescriptorTable global_descriptor_table = {
  * GDT pointed by this variable is already set to point global_descriptor_table above.
  * From: https://wiki.osdev.org/Global_Descriptor_Table, GDTR.size is GDT size minus 1.
  */
+
+struct GDTR _gdt_gdtr = {
+    .size = sizeof(global_descriptor_table) - 1,
+    .address = &global_descriptor_table
+};
