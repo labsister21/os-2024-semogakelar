@@ -51,7 +51,7 @@ struct SegmentDescriptor {
     uint8_t segment_64bit : 1;
     uint8_t default_size : 1;
     uint8_t granularity : 1;
-    uint8_t base_high : 8;
+    uint8_t base_high;
     // TODO : Continue SegmentDescriptor definition
 
 } __attribute__((packed));
