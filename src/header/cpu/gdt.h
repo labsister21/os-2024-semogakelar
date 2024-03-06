@@ -24,6 +24,7 @@ extern struct GDTR _gdt_gdtr;
  * @param base_mid     8-bit middle-bit base address
  * @param type_bit     4-bit contain type flags
  * @param non_system   1-bit contain system
+ * @param desc_privilage_lvl
  * @param present_bit
  * @param segment_mid
  * @param available

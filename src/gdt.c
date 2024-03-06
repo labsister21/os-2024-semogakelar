@@ -32,10 +32,10 @@ struct GlobalDescriptorTable global_descriptor_table = {
             .non_system = 1,
             .desc_privilage_lvl = 0,
             .present_bit = 1,
-            .segment_mid = 0,
+            .segment_mid = 0xF,
             .available = 0,
             .segment_64bit = 0,
-            .default_size = 0,
+            .default_size = 1,
             .granularity = 1,
             .base_high = 0
         },
@@ -48,10 +48,10 @@ struct GlobalDescriptorTable global_descriptor_table = {
             .non_system = 1,
             .desc_privilage_lvl = 0,
             .present_bit = 1,
-            .segment_mid = 0,
+            .segment_mid = 0xF,
             .available = 0,
             .segment_64bit = 0,
-            .default_size = 0,
+            .default_size = 1,
             .granularity = 1,
             .base_high = 0
         }

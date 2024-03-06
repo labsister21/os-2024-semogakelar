@@ -49,3 +49,4 @@ iso: kernel
 		-o OS2024.iso              \
 		bin/iso
 	@rm -r $(OUTPUT_FOLDER)/iso/
+	@qemu-system-i386 -s -cdrom OS2024.iso
