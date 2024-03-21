@@ -12,7 +12,8 @@ void kernel_setup(void) {
     pic_remap();
     initialize_idt();
     framebuffer_clear();
+    // framebuffer_write(0,0,' ',0xF,0xF);
     framebuffer_set_cursor(0, 0);
-    __asm__("int $0x4");
+    __asm__("int $0xF4");
     while (true);
 }
