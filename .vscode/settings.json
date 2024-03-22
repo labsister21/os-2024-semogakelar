@@ -64,6 +64,9 @@
     "stdio.h": "c",
     "keyboard.h": "c",
     "string.h": "c",
-    "portio.h": "c"
+    "portio.h": "c",
+    "stddef.h": "c",
+    "crtdefs.h": "c",
+    "stdbool.h": "c"
   }
 }
