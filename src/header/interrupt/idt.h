@@ -70,7 +70,7 @@ struct InterruptDescriptorTable {
  */
 struct IDTR {
     uint16_t                     size;
-    struct interrupt_descriptor_table *address;
+    struct InterruptDescriptorTable *address;
 } __attribute__((packed));
 
 
