@@ -61,6 +61,8 @@
     "gdt.h": "c",
     "stdint.h": "c",
     "cstdint": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "keyboard.h": "c",
+    "string.h": "c"
   }
 }
