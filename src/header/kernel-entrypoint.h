@@ -2,6 +2,7 @@
 #define _KERNEL_ENTRYPOINT
 
 #include "header/cpu/gdt.h"
+#include "header/cpu/idt.h"
 
 /**
  * Load GDT from gdtr and complete init for protected mode. This procedure implemented in asm.
