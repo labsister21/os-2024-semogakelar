@@ -64,10 +64,8 @@ bool enough_empty_cluster(struct FAT32FileAllocationTable* fat_table, uint32_t r
 }
 
 void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster) {
-    uint32_t const NUMBER_OF_CLUSTER = CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry);
-
     struct FAT32DirectoryEntry empty_entry = {0};
-    for (uint32_t i = 0; i < NUMBER_OF_CLUSTER; i++) {
+    for (uint32_t i = 0; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
         dir_table->table[i] = empty_entry;
     }
 
@@ -266,7 +264,7 @@ int8_t write(struct FAT32DriverRequest request) {
             write_clusters(request.buf + CLUSTER_SIZE*partitions_count, idx, 1);
             partitions_count++;
         }
-        fat32_driver_state.fat_table.cluster_map[idx] = FAT32_FAT_END_OF_FILE;
+        fat32_driver_state.fat_table.cluster_map[empty_cluster_idx] = FAT32_FAT_END_OF_FILE;
         write_clusters(request.buf + CLUSTER_SIZE*partitions_count, empty_cluster_idx, 1);
         write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
     }
