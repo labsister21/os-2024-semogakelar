@@ -1,6 +1,9 @@
 {
     "debug.onTaskErrors": "debugAnyway",
     "files.associations": {
-        "gdt.h": "c"
+        "gdt.h": "c",
+        "fat32.h": "c",
+        "stdint.h": "c",
+        "stddef.h": "c"
     },
 }
