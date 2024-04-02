@@ -17,15 +17,7 @@ void kernel_setup(void) {
     initialize_idt();
     activate_keyboard_interrupt();
     framebuffer_clear();
-    struct FAT32DriverState driver_state;
-    driver_state.fat_table.cluster_map[0] = CLUSTER_0_VALUE;
-    driver_state.fat_table.cluster_map[1] = CLUSTER_1_VALUE;
-    driver_state.fat_table.cluster_map[2] = FAT32_FAT_END_OF_FILE;
-    memset(driver_state.fat_table.cluster_map[3], FAT32_FAT_EMPTY_ENTRY, BLOCK_SIZE*4);
-    printf("%u", driver_state.fat_table.cluster_map[3]);
-    // for (int i=0; i < 4*BLOCK_SIZE;i++){
-    // }
-    // create_fat32();
+    create_fat32();
     // framebuffer_set_cursor(0, 0);
     // __asm__("int $0x4");
         

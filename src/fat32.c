@@ -15,19 +15,16 @@ const uint8_t fs_signature[BLOCK_SIZE] = {
     [BLOCK_SIZE-1] = 'k',
 };
 
-const uint8_t test[CLUSTER_SIZE] = {
-    'C', 'o', 'u', 'r'
-};
-
 void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster){
     // hitung nomor cluster
     uint32_t empty_cluster = 0;
+    char* ext = "/0";
     while (driver_state.fat_table.cluster_map[empty_cluster] != FAT32_FAT_EMPTY_ENTRY) {
         empty_cluster++;
     }
 
     memcpy(dir_table->table[0].name, name, sizeof(name));
-    memcpy(dir_table->table[0].ext, "\0", sizeof(dir_table->table[0].ext));
+    memcpy(dir_table->table[0].ext, ext, sizeof(dir_table->table[0].ext));
     dir_table->table[0].attribute = ATTR_SUBDIRECTORY;
     dir_table->table[0].user_attribute = UATTR_NOT_EMPTY;
     dir_table->table[0].undelete = false;
@@ -42,14 +39,20 @@ void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uin
     dir_table->table[0].filesize = 0; // Directories have 0 filesize
 
     // Initialize ".." entry
-    int dir_idx = 1;
-    while (driver_state.dir_table_buf.table[dir_idx].cluster_low != parent_dir_cluster) {
-        dir_idx++;
+
+    char* parent_name;
+    char* root = "root";
+    if ( memcmp(name, root, 4) == 0){
+        parent_name = "root";
+    } else {
+        int dir_idx = 1;
+        struct ClusterBuffer c;
+        read_clusters (&c, parent_dir_cluster, 1);
+        memcpy(parent_name, &c + 32, 8);
     }
-    char* parent_name = driver_state.dir_table_buf.table[dir_idx].name;
 
     memcpy(dir_table->table[1].name, parent_name, sizeof(parent_name));
-    // strcpy(dir_table->table[1].ext, "\0");
+    memcpy(dir_table->table[0].ext, "\0", sizeof(dir_table->table[0].ext));
     dir_table->table[1].attribute = ATTR_SUBDIRECTORY;
     dir_table->table[1].user_attribute = UATTR_NOT_EMPTY;
     dir_table->table[1].undelete = false;
@@ -73,9 +76,13 @@ void create_fat32(){
     driver_state.fat_table.cluster_map[1] = CLUSTER_1_VALUE;
     init_directory_table(&driver_state.dir_table_buf, "root", ROOT_CLUSTER_NUMBER);
     driver_state.fat_table.cluster_map[2] = FAT32_FAT_END_OF_FILE;
+
     struct ClusterBuffer b;
-    for (int i = 0; i < CLUSTER_SIZE; i++) b.buf[i] = test[i];
+    memcpy(&b, &driver_state.dir_table_buf, sizeof(driver_state.dir_table_buf.table));
     write_clusters(&b, 2, 1);
+
+    memcpy(&b, &driver_state.fat_table, sizeof(driver_state.fat_table.cluster_map));
+    write_clusters(&b, 1, 1);
 }
 
 bool is_empty_storage(){
