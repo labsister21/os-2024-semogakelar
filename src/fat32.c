@@ -308,7 +308,7 @@ int8_t Delete(struct FAT32DriverRequest request) {
         }
     }
 
-    parent_directory_table.table[idx].attribute = '\0';
+    memset(&parent_directory_table.table[idx], '\0' , sizeof(dir_entry));
 
     uint32_t deleted_cluster = dir_entry.cluster_low;
     uint32_t next_deleted_cluster;
