@@ -271,3 +271,55 @@ int8_t write(struct FAT32DriverRequest request) {
 
     return 0;
 }
+
+int8_t Delete(struct FAT32DriverRequest request) {
+    struct FAT32DirectoryTable parent_directory_table;
+    read_clusters(&parent_directory_table, request.parent_cluster_number, 1);
+    
+    if (parent_directory_table.table[0].attribute != ATTR_SUBDIRECTORY) {
+        return -1;
+    }
+
+    uint32_t idx = 0;
+    while (idx < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry) &&
+        !(memcmp(parent_directory_table.table[idx].name, request.name, sizeof(request.name)) == 0 &&
+          memcmp(parent_directory_table.table[idx].ext, request.ext, sizeof(request.ext)) == 0)) {
+        
+        idx++;
+    }
+
+    if (idx == CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)) {
+        return 1;
+    }
+
+    struct FAT32DirectoryEntry dir_entry = parent_directory_table.table[idx];
+    if (dir_entry.attribute == ATTR_SUBDIRECTORY) {
+        struct FAT32DirectoryTable folder_directory_table;
+        read_clusters(&folder_directory_table, dir_entry.cluster_low, 1);
+
+        uint32_t idx2 = 2;
+        while (idx2 < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry) &&
+            folder_directory_table.table[idx2].attribute != UATTR_NOT_EMPTY) {
+            
+            idx2++;
+        }
+        if (idx2 < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)) {
+            return 2;
+        }
+    }
+
+    parent_directory_table.table[idx].attribute = '\0';
+
+    uint32_t deleted_cluster = dir_entry.cluster_low;
+    uint32_t next_deleted_cluster;
+    while (fat32_driver_state.fat_table.cluster_map[deleted_cluster] != FAT32_FAT_END_OF_FILE) {
+        next_deleted_cluster = fat32_driver_state.fat_table.cluster_map[deleted_cluster];
+        fat32_driver_state.fat_table.cluster_map[deleted_cluster] = FAT32_FAT_EMPTY_ENTRY;
+        deleted_cluster = next_deleted_cluster;
+    }
+    fat32_driver_state.fat_table.cluster_map[deleted_cluster] = FAT32_FAT_EMPTY_ENTRY;
+    write_clusters(parent_directory_table.table, request.parent_cluster_number, 1);
+    write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
+
+    return 0;
+}
