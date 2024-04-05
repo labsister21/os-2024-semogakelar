@@ -21,6 +21,10 @@ void kernel_setup(void) {
 
     // struct ClusterBuffer b[5];
     // int8_t ret_val;
+    /* ========== CRUD ========== */
+    
+    struct ClusterBuffer b[5];
+    int8_t ret_val;
 
     // struct FAT32DriverRequest request1 = {
     //     .buf                    = &b,
@@ -30,6 +34,15 @@ void kernel_setup(void) {
     //     .buffer_size            = 0x0
     // };
     // ret_val = read_directory(request1);
+    struct FAT32DriverRequest request1 = {
+        .buf                    = &b,
+        .name                   = "folder1\0",
+        .ext                    = "\0\0\0",
+        .parent_cluster_number  = ROOT_CLUSTER_NUMBER,
+        .buffer_size            = 10000
+    };
+    ret_val = read_directory(request1);  // ret_val = 0
+    ret_val = read(request1);            // ret_val = 1;
 
     // struct FAT32DriverRequest request2 = {
     //     .buf                    = &b,
@@ -39,6 +52,19 @@ void kernel_setup(void) {
     //     .buffer_size            = 10000
     // };
     // ret_val = read(request2);
+    struct FAT32DriverRequest request2 = {
+        .buf                    = &b,
+        .name                   = "daijoubu",
+        .ext                    = "\0\0\0",
+        .parent_cluster_number  = 0x04,
+        .buffer_size            = 10000
+    };
+    ret_val = read_directory(request2);  // ret_val = 1
+    ret_val = read(request2);            // ret_val = 0
+
+    request2.buffer_size = 0;
+    ret_val = read_directory(request2);  // ret_val = -1
+    ret_val = read_directory(request2);  // ret_val = -1
 
     // struct FAT32DriverRequest request3 = {
     //     .buf                    = &b,
@@ -48,6 +74,28 @@ void kernel_setup(void) {
     //     .buffer_size            = 7000
     // };
     // ret_val = write(request3);
+    struct FAT32DriverRequest request3 = {
+        .buf                    = &b,
+        .name                   = "gaada\0\0\0",
+        .ext                    = "\0\0\0",
+        .parent_cluster_number  = 0x04,
+        .buffer_size            = 10000
+    };
+    ret_val = read_directory(request3);  // ret_val = 2
+    ret_val = read_directory(request3);  // ret_val = 2
+    
+    struct FAT32DriverRequest request4 = {
+        .buf                    = &b,
+        .name                   = "imfine2\0",
+        .ext                    = "\0\0\0",
+        .parent_cluster_number  = ROOT_CLUSTER_NUMBER,
+        .buffer_size            = 6000
+    };
+    ret_val = write(request4);  // ret_val = 0
+    ret_val = write(request4);  // ret_val = 1
+
+    request4.parent_cluster_number = 0x05;
+    ret_val = write(request4);  // ret_val = 2
 
     // struct FAT32DriverRequest request4 = {
     //     .buf                    = &b,
@@ -57,10 +105,30 @@ void kernel_setup(void) {
     //     .buffer_size            = 0
     // };
     // ret_val = write(request4);
+    struct FAT32DriverRequest request5 = {
+        .buf                    = &b,
+        .name                   = "smgkelar",
+        .ext                    = "\0\0\0",
+        .parent_cluster_number  = ROOT_CLUSTER_NUMBER,
+        .buffer_size            = 0
+    };
+    ret_val = write(request5);   // ret_val = 0
+    ret_val = Delete(request5);  // ret_val = 0
+    ret_val = Delete(request5);  // ret_val = 1
+    ret_val = Delete(request4);  // ret_val = -1
+    request4.parent_cluster_number = ROOT_CLUSTER_NUMBER;
+    ret_val = Delete(request4);  // ret_val = 0
+    ret_val = Delete(request1);  // ret_val = 2
 
     // ret_val++; ret_val--;
     // while (true);
      
+    keyboard_state_activate();
+    ret_val++; ret_val--;
+
+
+    /* ========== Keyboard ========== */
+
     keyboard_state_activate();
     
     int row = 0, col = 0;
