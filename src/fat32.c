@@ -310,7 +310,7 @@ int8_t Delete(struct FAT32DriverRequest request) {
 
         uint32_t idx2 = 2;
         while (idx2 < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry) &&
-            folder_directory_table.table[idx2].attribute != UATTR_NOT_EMPTY) {
+            folder_directory_table.table[idx2].user_attribute != UATTR_NOT_EMPTY) {
             
             idx2++;
         }

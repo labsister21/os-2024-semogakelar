@@ -8,7 +8,6 @@
 struct GlobalDescriptorTable global_descriptor_table = {
     .table = {
         {
-            // TODO : Implement
             .segment_low = 0,
             .base_low = 0,
             .base_mid = 0,
@@ -24,7 +23,6 @@ struct GlobalDescriptorTable global_descriptor_table = {
             .base_high = 0
         },
         {
-            // TODO : Implement
             .segment_low = 0xFFFF,
             .base_low = 0,
             .base_mid = 0,
@@ -40,7 +38,6 @@ struct GlobalDescriptorTable global_descriptor_table = {
             .base_high = 0
         },
         {
-            // TODO : Implement
             .segment_low = 0xFFFF,
             .base_low = 0,
             .base_mid = 0,
@@ -64,8 +61,6 @@ struct GlobalDescriptorTable global_descriptor_table = {
  * From: https://wiki.osdev.org/Global_Descriptor_Table, GDTR.size is GDT size minus 1.
  */
 struct GDTR _gdt_gdtr = {
-    // TODO : Implement, this GDTR will point to global_descriptor_table. 
-    //        Use sizeof operator
     .size = sizeof(global_descriptor_table) - 1,
     .address = &global_descriptor_table
 };

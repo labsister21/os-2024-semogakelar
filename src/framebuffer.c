@@ -7,7 +7,6 @@
 #include "header/cpu/portio.h"
 
 void framebuffer_set_cursor(uint8_t r, uint8_t c) {
-    // TODO : Implement
     uint16_t pos = r * 80 + c;
  
 	out(0x3D4, 0x0F);
@@ -17,7 +16,6 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c) {
 }
 
 void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) {
-    // TODO : Implement
     uint16_t attrib = (bg << 4) | (fg & 0x0F);
     volatile uint16_t * where;
     where = (volatile uint16_t *)FRAMEBUFFER_MEMORY_OFFSET + (row * 80 + col);
@@ -25,7 +23,6 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 }
 
 void framebuffer_clear(void) {
-    // TODO : Implement
     uint16_t cell = (0x07 << 8) | 0x00;
     memset(FRAMEBUFFER_MEMORY_OFFSET, cell, 80 * 25);
 }

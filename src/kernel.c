@@ -1,4 +1,6 @@
+
 #include <stdint.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include "header/cpu/gdt.h"
 #include "header/cpu/idt.h"

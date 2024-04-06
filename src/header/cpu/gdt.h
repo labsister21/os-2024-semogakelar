@@ -24,7 +24,18 @@ extern struct GDTR _gdt_gdtr;
  * @param base_mid     8-bit middle-bit base address
  * @param type_bit     4-bit contain type flags
  * @param non_system   1-bit contain system
+ * @param desc_privilage_lvl
+ * @param present_bit
+ * @param segment_mid
+ * @param available
+ * @param segment_64bit
+ * @param default_size
+ * @param granularity
+ * @param base_high
  */
+
+
+
 struct SegmentDescriptor {
     // First 32-bit
     uint16_t segment_low;
@@ -65,5 +76,6 @@ struct GDTR {
     uint16_t                     size;
     struct GlobalDescriptorTable *address;
 } __attribute__((packed));
+
 
 #endif
