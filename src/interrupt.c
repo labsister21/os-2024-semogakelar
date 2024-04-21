@@ -1,8 +1,6 @@
-#include "header/cpu/portio.h"
 #include "header/cpu/interrupt.h"
+#include "header/cpu/portio.h"
 #include "header/driver/keyboard.h"
-
-#define KEYBOARD_INTERRUPT_NUMBER 33
 
 void io_wait(void) {
     out(0x80, 0);
@@ -38,19 +36,14 @@ void pic_remap(void) {
     out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
-void main_interrupt_handler(struct InterruptFrame frame) {
-    switch (frame.int_number) {
-        case KEYBOARD_INTERRUPT_NUMBER:
-            keyboard_isr();
-            break;
-        // Handle other interrupt numbers if necessary
-        // ...
-        default:
-            // Handle unknown interrupt
-            break;
-    }
-}
-
 void activate_keyboard_interrupt(void) {
     out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
+}
+
+void main_interrupt_handler(struct InterruptFrame frame) {
+    switch (frame.int_number) {
+        case IRQ_KEYBOARD + PIC1_OFFSET:
+            keyboard_isr();
+            break;
+    }
 }

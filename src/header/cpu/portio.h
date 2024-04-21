@@ -13,14 +13,6 @@
  */
 void out(uint16_t port, uint8_t data);
 
-/** out:
- *  Sends the given data to the given I/O port
- *
- *  @param port The I/O port to send the data to
- *  @param data The data to send to the I/O port
- */
-void out16(uint16_t port, uint16_t data);
-
 /** in:
  *  Read data from the given I/O port
  *
@@ -29,7 +21,15 @@ void out16(uint16_t port, uint16_t data);
  */
 uint8_t in(uint16_t port);
 
-/** in:
+/** out16:
+ *  Sends the given data to the given I/O port
+ *
+ *  @param port The I/O port to send the data to
+ *  @param data The data to send to the I/O port
+ */
+void out16(uint16_t port, uint16_t data);
+
+/** in16:
  *  Read data from the given I/O port
  *
  *  @param port The I/O port to request the data

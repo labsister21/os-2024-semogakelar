@@ -44,8 +44,7 @@ struct ClusterBuffer {
     uint8_t buf[CLUSTER_SIZE];
 } __attribute__((packed));
 
-
-
+extern struct FAT32DriverState fat32_driver_state;
 
 
 /* -- FAT32 Data Structures -- */
@@ -246,5 +245,16 @@ int8_t write(struct FAT32DriverRequest request);
  * @return Error code: 0 success - 1 not found - 2 folder is not empty - -1 unknown
  */
 int8_t Delete(struct FAT32DriverRequest request);
+
+
+/* -- Helper Functions -- */
+
+void init_directory_entry(struct FAT32DirectoryEntry* dest, char* name, char* ext, uint8_t attribute, uint32_t cluster_number, uint32_t filesize);
+
+uint32_t find_empty_cluster(struct FAT32FileAllocationTable* fat_table);
+
+uint32_t find_empty_dir_entry(struct FAT32DirectoryTable* dir_table);
+
+bool enough_empty_cluster(struct FAT32FileAllocationTable* fat_table, uint32_t required_empty_clusters);
 
 #endif
