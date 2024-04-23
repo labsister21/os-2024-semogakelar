@@ -55,8 +55,8 @@ struct PageDirectoryEntry {
     // TODO : Continue, Use uint16_t + bitfield here, Do not use uint8_t
     uint16_t ignored        : 3;
     uint16_t pat            : 1;
-    uint16_t higher_address : 4;
-    uint16_t reserved_2     : 5;
+    uint16_t higher_address : 8;
+    uint16_t reserved       : 1;
     uint16_t lower_address  : 10;
 } __attribute__((packed));
 
@@ -72,7 +72,7 @@ struct PageDirectoryEntry {
  */
 struct PageDirectory {
     // TODO : Implement
-    struct PageDirectoryEntry table[PAGE_ENTRY_COUNT]
+    struct PageDirectoryEntry table[PAGE_ENTRY_COUNT];
 } __attribute__((aligned(0x1000)));
 
 /**

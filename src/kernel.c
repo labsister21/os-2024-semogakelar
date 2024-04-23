@@ -1,4 +1,3 @@
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -11,6 +10,7 @@
 #include "header/driver/disk.h"
 #include "header/filesystem/fat32.h"
 #include "header/stdlib/string.h"
+#include "header/memory/paging.h"
 
 void kernel_setup(void) {
     load_gdt(&_gdt_gdtr);
