@@ -11,6 +11,9 @@
 */ 
 #define GDT_KERNEL_CODE_SEGMENT_SELECTOR 0x8
 #define GDT_KERNEL_DATA_SEGMENT_SELECTOR 0x10
+#define GDT_USER_CODE_SEGMENT_SELECTOR 0x18
+#define GDT_USER_DATA_SEGMENT_SELECTOR 0x20
+#define GDT_TSS_SELECTOR               0x28
 
 extern struct GDTR _gdt_gdtr;
 
@@ -28,8 +31,8 @@ extern struct GDTR _gdt_gdtr;
  * @param present_bit
  * @param segment_mid
  * @param available
- * @param segment_64bit
- * @param default_size
+ * @param code_segment
+ * @param default_op_size
  * @param granularity
  * @param base_high
  */
@@ -77,5 +80,7 @@ struct GDTR {
     struct GlobalDescriptorTable *address;
 } __attribute__((packed));
 
+// Set GDT_TSS_SELECTOR with proper TSS values, accessing _interrupt_tss_entry
+void gdt_install_tss(void);
 
 #endif
