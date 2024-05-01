@@ -36,7 +36,7 @@ void update_page_directory_entry(
 ) {
     uint32_t page_index = ((uint32_t) virtual_addr >> 22) & 0x3FF;
     page_dir->table[page_index].flag          = flag;
-    page_dir->table[page_index].lower_address = ((uint32_t) physical_addr >> 22) & 0x3FF;
+    page_dir->table[page_index].lower_address = (( uint32_t) physical_addr >> 22) & 0x3FF;
     flush_single_tlb(virtual_addr);
 }
 
@@ -79,10 +79,15 @@ bool paging_allocate_user_page_frame(struct PageDirectory *page_dir, void *virtu
     }
     
     struct PageDirectoryEntryFlag flag = {
-        .present_bit = 1,
-        .write_bit = 1,
-        .user_supervisor_bit = 1,
-        .use_pagesize_4_mb = 1
+        .present_bit        = 1,
+    // TODO : Continue. Note: Only 8-bit flags
+        .write_bit          = 1,
+        .user_supervisor_bit= 1,
+        .pwt_bit            = 0,
+        .pcd_bit            = 0,
+        .accesed_bit        = 0,
+        .dirty_bit          = 0,
+        .use_pagesize_4_mb  = 1
     };
     
     update_page_directory_entry(page_dir, (void *)(i * PAGE_FRAME_SIZE), virtual_addr, flag);

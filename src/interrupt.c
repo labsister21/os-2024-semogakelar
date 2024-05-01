@@ -3,6 +3,11 @@
 #include "header/driver/keyboard.h"
 #include "header/cpu/gdt.h"
 #include "header/memory/paging.h"
+#include "header/filesystem/fat32.h"
+#include "header/driver/framebuffer.h"
+
+// Keperluan penulisan di terminal
+uint8_t row_now = 0;
 
 void io_wait(void) {
     out(0x80, 0);
@@ -50,6 +55,9 @@ void main_interrupt_handler(struct InterruptFrame frame) {
         case IRQ_KEYBOARD + PIC1_OFFSET:
             keyboard_isr();
             break;
+        case 0x30:
+            syscall(frame);
+            break;
     }
 }
 
@@ -63,4 +71,47 @@ void set_tss_kernel_current_stack(void) {
     __asm__ volatile ("mov %%ebp, %0": "=r"(stack_ptr) : /* <Empty> */);
     // Add 8 because 4 for ret address and other 4 is for stack_ptr variable
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
+}
+
+void putchar(char s, uint32_t color) {
+    framebuffer_write(row_now, 0, s, color, 0x00);
+}
+
+void puts(char* s, uint32_t len, uint32_t color) {
+    uint8_t col = 0;
+    for (uint32_t i = 0; i < len; i++) {
+        char *currentChar = s + i;
+        if (*currentChar == '\n') {
+            row_now++;
+            col = 0;
+        } else {
+            framebuffer_write(row_now, col, *currentChar, color, 0x00);
+            col++;
+        }
+    }
+    framebuffer_write(row_now, col, '\0', color, 0x00);
+}
+
+void syscall(struct InterruptFrame frame) {
+    switch (frame.cpu.general.eax) {
+        case 0:
+            *((int8_t*) frame.cpu.general.ecx) = read(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            break;
+        case 4:
+            get_keyboard_buffer((char*) frame.cpu.general.ebx);
+            break;
+        case 5:
+            putchar((char) frame.cpu.general.ebx, frame.cpu.general.ecx);
+            break;
+        case 6:
+            puts(
+                (char*) frame.cpu.general.ebx, 
+                frame.cpu.general.ecx, 
+                frame.cpu.general.edx
+            ); // Assuming puts() exist in kernel
+            break;
+        case 7: 
+            keyboard_state_activate();
+            break;
+    }
 }
