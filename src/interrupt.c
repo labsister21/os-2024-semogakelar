@@ -8,6 +8,7 @@
 
 // Keperluan penulisan di terminal
 uint8_t row_now = 0;
+uint8_t col_now = 0;
 
 void io_wait(void) {
     out(0x80, 0);
@@ -74,22 +75,44 @@ void set_tss_kernel_current_stack(void) {
 }
 
 void putchar(char s, uint32_t color) {
-    framebuffer_write(row_now, 0, s, color, 0x00);
+    if (s == '\n') {
+        row_now++;
+        col_now = 0;
+    } else if (s == '\b') {
+        if (col_now > 0) col_now--; else if (row_now > 0) row_now--, col_now = 80;
+        while (*(FRAMEBUFFER_MEMORY_OFFSET + (row_now*80 + col_now)*2) == '\0') {
+            if (col_now > 0) {
+                col_now--;
+            } else if (row_now > 0) {
+                row_now--;
+                col_now = 80;
+            }
+        }
+    } else if (s == '\t') {
+        for (int i = 0; i < 2; i++) {
+            framebuffer_write(row_now,col_now,' ', color, 0x00);
+            col_now++;
+        }
+    } else if (s != 0) {
+        framebuffer_write(row_now, col_now, s, color, 0x00);
+        col_now++;
+    }
+    framebuffer_write(row_now, col_now, '\0', 0xF, 0);
+    framebuffer_set_cursor(row_now, col_now);
 }
 
 void puts(char* s, uint32_t len, uint32_t color) {
-    uint8_t col = 0;
     for (uint32_t i = 0; i < len; i++) {
         char *currentChar = s + i;
         if (*currentChar == '\n') {
             row_now++;
-            col = 0;
+            col_now = 0;
         } else {
-            framebuffer_write(row_now, col, *currentChar, color, 0x00);
-            col++;
+            framebuffer_write(row_now, col_now, *currentChar, color, 0x00);
+            col_now++;
         }
     }
-    framebuffer_write(row_now, col, '\0', color, 0x00);
+    framebuffer_set_cursor(row_now, col_now);
 }
 
 void syscall(struct InterruptFrame frame) {
@@ -101,7 +124,7 @@ void syscall(struct InterruptFrame frame) {
             get_keyboard_buffer((char*) frame.cpu.general.ebx);
             break;
         case 5:
-            putchar((char) frame.cpu.general.ebx, frame.cpu.general.ecx);
+            putchar(*((char*)frame.cpu.general.ebx), frame.cpu.general.ecx);
             break;
         case 6:
             puts(

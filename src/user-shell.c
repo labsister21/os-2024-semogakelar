@@ -22,8 +22,8 @@ int main(void) {
     };
     int32_t retcode;
     syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
-    // if (retcode == 0)
-    //     syscall(6, (uint32_t) "owo\n", 4, 0xF);
+    if (retcode == 0) 
+        syscall(6, (uint32_t) "owo\n", 4, 0xF);
 
     char buf;
     syscall(7, 0, 0, 0);
