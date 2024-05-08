@@ -52,4 +52,22 @@ int memcmp(const void *s1, const void *s2, size_t n);
 */
 void *memmove(void *dest, const void *src, size_t n);
 
+/**
+ * Returns the length of a string
+ * 
+ * @param str Pointer to string
+ * 
+ * @return Length of the string
+*/
+size_t strlen(char *str);
+
+/**
+ * Empties a string up to the length n
+ * 
+ * @param str Pointer to string
+ * @param n Number of chars to be emptied
+*/
+void clear(void* str, size_t n);
+
+
 #endif

@@ -43,3 +43,18 @@ void *memmove(void *dest, const void *src, size_t n) {
 
     return dest;
 }
+
+size_t strlen(char *str) {
+    size_t i = 0;
+    while (str[i] != '\0')
+        i++;
+    
+    return i;
+}
+
+void clear(void* str, size_t n) {
+    uint8_t* ptr = (uint8_t*) str;
+    for (size_t i = 0; i < n; i++) {
+        ptr[i] = 0x0;
+    }
+}
