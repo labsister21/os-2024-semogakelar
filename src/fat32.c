@@ -95,18 +95,20 @@ bool is_empty_storage(void) {
 
 void create_fat32(void) {
     struct FAT32FileAllocationTable fat_table = {
-        .cluster_map = { CLUSTER_0_VALUE, CLUSTER_1_VALUE, FAT32_FAT_END_OF_FILE,
+        .cluster_map = { CLUSTER_0_VALUE, CLUSTER_1_VALUE, FAT32_FAT_EMPTY_ENTRY,
                          [3 ... CLUSTER_MAP_SIZE - 1] = FAT32_FAT_EMPTY_ENTRY }};
     
+    fat32_driver_state.fat_table = fat_table;
     struct FAT32DirectoryTable root_directory_table;
     init_directory_table(&root_directory_table, "root\0\0\0\0", ROOT_CLUSTER_NUMBER);
+
+    fat_table.cluster_map[2] = FAT32_FAT_END_OF_FILE;
+    fat32_driver_state.fat_table = fat_table;
+    fat32_driver_state.dir_table_buf = root_directory_table;
 
     write_clusters(fs_signature, BOOT_SECTOR, 1);
     write_clusters(&fat_table, FAT_CLUSTER_NUMBER, 1);
     write_clusters(&root_directory_table, ROOT_CLUSTER_NUMBER, 1);
-
-    fat32_driver_state.fat_table = fat_table;
-    fat32_driver_state.dir_table_buf = root_directory_table;
 }
 
 void initialize_filesystem_fat32(void) {

@@ -46,20 +46,6 @@ void activate_keyboard_interrupt(void) {
     out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
 }
 
-void main_interrupt_handler(struct InterruptFrame frame) {
-    switch (frame.int_number) {
-        case PAGE_FAULT:
-            __asm__("hlt");
-            break;        
-        case IRQ_KEYBOARD + PIC1_OFFSET:
-            keyboard_isr();
-            break;
-        case 0x30:
-            syscall(frame);
-            break;
-    }
-}
-
 struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
 };
@@ -72,12 +58,19 @@ void set_tss_kernel_current_stack(void) {
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
 }
 
-
-
 void syscall(struct InterruptFrame frame) {
     switch (frame.cpu.general.eax) {
         case 0:
             *((int8_t*) frame.cpu.general.ecx) = read(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            break;
+        case 1:
+            *((int8_t*) frame.cpu.general.ecx) = read_directory(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            break;
+        case 2:
+            *((int8_t*) frame.cpu.general.ecx) = write(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
+            break;
+        case 3:
+            *((int8_t*) frame.cpu.general.ecx) = Delete(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
             break;
         case 4:
             keyboard_state_activate();
@@ -99,6 +92,20 @@ void syscall(struct InterruptFrame frame) {
             break;
         case 7: 
             keyboard_state_activate();
+            break;
+    }
+}
+
+void main_interrupt_handler(struct InterruptFrame frame) {
+    switch (frame.int_number) {
+        case PAGE_FAULT:
+            __asm__("hlt");
+            break;        
+        case IRQ_KEYBOARD + PIC1_OFFSET:
+            keyboard_isr();
+            break;
+        case 0x30:
+            syscall(frame);
             break;
     }
 }

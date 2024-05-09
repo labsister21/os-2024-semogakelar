@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 struct KeyboardDriverState keyboard_driver_state;
-char buff[500];
+char buff[KEYBOARD_BUFFER_SIZE];
 
 uint8_t row_now = 0;
 uint8_t col_now = 0;
@@ -37,6 +37,9 @@ void keyboard_state_activate(void) {
         keyboard_driver_state.keyboard_buffer[i] = '\0';
     }
     keyboard_driver_state.buffer_index = 0;
+    for (uint32_t i = 0; i < KEYBOARD_BUFFER_SIZE; i++) {
+        buff[i] = '\0';
+    }
 }
 
 void keyboard_state_deactivate(void) {
@@ -44,7 +47,7 @@ void keyboard_state_deactivate(void) {
 }
 
 void get_keyboard_buffer(char *buf) {
-    memcpy(buf, buff, strlen(buff));
+    memcpy(buf, buff, KEYBOARD_BUFFER_SIZE);
 }
 
 bool is_keyboard_blocking(void) {
