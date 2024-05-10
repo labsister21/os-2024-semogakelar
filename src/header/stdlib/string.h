@@ -67,7 +67,7 @@ size_t strlen(char *str);
  * @param str Pointer to string
  * @param n Number of chars to be emptied
 */
-void clear(void* str, size_t n);
+void strclear(void* str, size_t n);
 
 
 #endif

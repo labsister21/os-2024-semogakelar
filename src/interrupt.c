@@ -6,6 +6,7 @@
 #include "header/filesystem/fat32.h"
 #include "header/driver/framebuffer.h"
 #include "header/stdlib/string.h"
+#include "header/driver/keyboard.h"
 
 
 void io_wait(void) {
@@ -93,6 +94,12 @@ void syscall(struct InterruptFrame frame) {
         case 7: 
             keyboard_state_activate();
             break;
+        case 8:
+            framebuffer_clear();
+            reset_write_position();
+            break;
+        case 9:
+            read_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
     }
 }
 

@@ -141,7 +141,7 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     }
 
     // Find requested entry
-    uint32_t idx = 0;
+    uint32_t idx = 2;
     while (idx < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry) &&
         memcmp(parent_directory_table.table[idx].name, request.name, sizeof(request.name)) != 0) {
         
@@ -210,13 +210,15 @@ int8_t write(struct FAT32DriverRequest request) {
     if (parent_directory_table.table[0].attribute != ATTR_SUBDIRECTORY) {
         return 2;
     }
+    uint8_t request_attribute = (request.buffer_size == 0)? ATTR_SUBDIRECTORY : 0;
 
-    // Check if there's already an entry with the same name and ext (in the parent folder)
+    // Check if there's already an entry with the same name and ext and attribute (in the parent folder)
     bool found = false;
     uint32_t idx = 0, empty_entry_idx = -1, number_of_empty_entry = 0;
     while (idx < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry) &&
         !(memcmp(parent_directory_table.table[idx].name, request.name, sizeof(request.name)) == 0 &&
-          memcmp(parent_directory_table.table[idx].ext, request.ext, sizeof(request.ext)) == 0)) {
+          memcmp(parent_directory_table.table[idx].ext, request.ext, sizeof(request.ext)) == 0 &&
+          parent_directory_table.table[idx].attribute == request_attribute)) {
         
         if (parent_directory_table.table[idx].user_attribute != UATTR_NOT_EMPTY) {
             number_of_empty_entry++;
@@ -240,10 +242,10 @@ int8_t write(struct FAT32DriverRequest request) {
         if (empty_cluster_idx == (uint32_t) -1)
             return -1;
         
-        fat32_driver_state.fat_table.cluster_map[empty_cluster_idx] = FAT32_FAT_END_OF_FILE;
         init_directory_table(&fat32_driver_state.dir_table_buf, request.name, request.parent_cluster_number);
         init_directory_entry(&parent_directory_table.table[empty_entry_idx], request.name, request.ext, ATTR_SUBDIRECTORY, empty_cluster_idx, request.buffer_size);
-        
+        fat32_driver_state.fat_table.cluster_map[empty_cluster_idx] = FAT32_FAT_END_OF_FILE;
+
         write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
         write_clusters(fat32_driver_state.dir_table_buf.table, empty_cluster_idx, 1);
         write_clusters(parent_directory_table.table, request.parent_cluster_number, 1);

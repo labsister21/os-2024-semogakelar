@@ -70,4 +70,7 @@ void putchar(char s, uint32_t color);
 // Puts a string to the screen
 void puts(char* s, uint32_t len, uint32_t color);
 
+// Resets the write position
+void reset_write_position();
+
 #endif

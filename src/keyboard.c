@@ -54,6 +54,11 @@ bool is_keyboard_blocking(void) {
     return keyboard_driver_state.keyboard_input_on;
 }
 
+void reset_write_position() {
+    row_now = 0;
+    col_now = 0;
+}
+
 void keyboard_isr(void) {
     uint8_t scancode = in(KEYBOARD_DATA_PORT);
     if (scancode & 0x80) {

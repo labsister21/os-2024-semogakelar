@@ -52,7 +52,7 @@ size_t strlen(char *str) {
     return i;
 }
 
-void clear(void* str, size_t n) {
+void strclear(void* str, size_t n) {
     uint8_t* ptr = (uint8_t*) str;
     for (size_t i = 0; i < n; i++) {
         ptr[i] = 0x0;
