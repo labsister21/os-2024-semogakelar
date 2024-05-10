@@ -69,6 +69,7 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/cd.c -o cd.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/mkdir.c -o mkdir.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/ls.c -o ls.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/cat.c -o cat.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/string.c -o string.o
 	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 --oformat=binary \
 		crt0.o \
@@ -76,6 +77,7 @@ user-shell:
 		string.o \
 		cd.o \
 		ls.o \
+		cat.o \
 		mkdir.o \
 		-o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
@@ -85,6 +87,7 @@ user-shell:
 		string.o \
 		cd.o \
 		ls.o \
+		cat.o \
 		mkdir.o \
 		-o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...

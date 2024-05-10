@@ -4,6 +4,7 @@
 #include "header/shell/cd.h"
 #include "header/shell/mkdir.h"
 #include "header/shell/ls.h"
+#include "header/shell/cat.h"
 
 uint32_t current_directory = ROOT_CLUSTER_NUMBER;
 char current_path[512];
@@ -171,6 +172,9 @@ int main(void) {
         }
         else if (strlen(cmd) == 5 && memcmp(cmd, "mkdir", 5) == 0) {
             mkdir(args, args_count);
+        }
+        else if (strlen(cmd) == 3 && memcmp(cmd, "cat", 3) == 0) {
+            cat(args, args_count);
         }
         else if (!(cmd[0] == '\0')) {
             put("error: no such command with the name '", LIGHT_RED);

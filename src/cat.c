@@ -1,4 +1,5 @@
 #include "header/shell/cat.h"
+#include "header/shell/cd.h"
 
 void cat(char args[][512], int args_count) {
     switch (args_count) {
@@ -54,20 +55,19 @@ void display_file(char path[][512], uint32_t num_of_directory) {
     }
 
     struct ClusterBuffer c[CLUSTER_SIZE*64] = {0};
-    struct FAT32DriverRequest temp = {
+    struct FAT32DriverRequest request = {
         .buf                    = &c,
-        .name                   = current_dir_table.table[i].name,
-        .ext                    = current_dir_table.table[i].ext,
         .parent_cluster_number  = current_directory,
         .buffer_size            = sizeof(c)
     };
+    memcpy(request.name, current_dir_table.table[i].name, 8);
+    memcpy(request.ext, current_dir_table.table[i].ext, 8);
 
-    int8_t read_file = read(temp);
-    int32_t j = 0;
-    while (c->buf[j] != '\0') {
-        putchar(c->buf[j],WHITE);
-        j++;
-    }
+    syscall(0, (uint32_t) &request, (uint32_t) &ret_val, 0);
+
+    // if ret_val != 0, tampilin pesan error sesuai ret_val
+
+    put((char*) c, WHITE);
     //////////////////////////////////////////////////////////////////
 
     current_directory = current_directory_temp;
