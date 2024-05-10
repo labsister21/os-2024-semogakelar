@@ -19,7 +19,7 @@ int8_t change_path(char path[][512], int num_of_directory) {
             }
             uint32_t parent_cluster_number = current_dir_table.table[1].cluster_low | current_dir_table.table[1].cluster_high << 16;
             temp_parent_cluster_number = parent_cluster_number;
-            update_directory_table(temp_dir_table, parent_cluster_number);
+            update_directory_table(&temp_dir_table, parent_cluster_number);
             retract_current_path();
         }
         else if (!(strlen(path[idx]) == 1 && memcmp(path[idx], ".", 1) == 0)) {
@@ -73,7 +73,7 @@ void cd(char args[][512], int args_count) {
     switch (args_count) {
         case 0:
             put("error: missing argument\n", LIGHT_RED);
-            put("Usage: cd <directory_path>\n", WHITE);
+            put("Usage: cd <directory_path>\n", LIGHT_GREY);
             break;
         case 1:
             char path[512][512];
@@ -84,7 +84,7 @@ void cd(char args[][512], int args_count) {
             break;
         default:
             put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
-            put("Usage: cd <directory_path>\n", WHITE);
+            put("Usage: cd <directory_path>\n", LIGHT_GREY);
             break;
     }
 }

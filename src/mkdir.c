@@ -5,7 +5,7 @@ void mkdir(char args[][512], int args_count) {
     switch (args_count) {
         case 0:
             put("error: missing argument\n", LIGHT_RED);
-            put("Usage: mkdir <directory_path>\n", WHITE);
+            put("Usage: mkdir <directory_path>\n", LIGHT_GREY);
             break;
         case 1:
             char path[512][512];
@@ -16,7 +16,7 @@ void mkdir(char args[][512], int args_count) {
             break;
         default:
             put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
-            put("Usage: mkdir <directory_path>\n", WHITE);
+            put("Usage: mkdir <directory_path>\n", LIGHT_GREY);
             break;
     }
 }
@@ -60,7 +60,9 @@ void create_directory(char path[][512], uint32_t num_of_directory) {
             if (num_of_directory >= 2) {
                 print_path(path, num_of_directory - 2, LIGHT_RED);
             } else {
-                put("current directory", LIGHT_RED);
+                put("current directory '", LIGHT_RED);
+                put(current_dir_table.table[0].name, LIGHT_RED);
+                put("' is full", LIGHT_RED);
             }
             put(" is full\n", LIGHT_RED);
             break;
@@ -79,6 +81,6 @@ void create_directory(char path[][512], uint32_t num_of_directory) {
     }
 
     current_directory = current_directory_temp;
-    update_directory_table(current_dir_table, current_directory);
+    update_directory_table(&current_dir_table, current_directory);
     memcpy(current_path, path_temp, sizeof(current_path));
 }
