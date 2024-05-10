@@ -16,6 +16,8 @@
  * - Even number memory: Character, 8-bit
  * - Odd number memory:  Character color lower 4-bit, Background color upper 4-bit
 */
+#define SCREEN_WIDTH 80
+#define SCREEN_HEIGHT 25
 
 /**
  * Set framebuffer character and color with corresponding parameter values.

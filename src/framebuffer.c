@@ -23,6 +23,9 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 }
 
 void framebuffer_clear(void) {
-    uint16_t cell = (0x07 << 8) | 0x00;
-    memset(FRAMEBUFFER_MEMORY_OFFSET, cell, 80 * 25);
+    for (int i = 0; i < SCREEN_HEIGHT; i++) {
+        for (int j = 0; j < SCREEN_WIDTH; j++) {
+            framebuffer_write(i, j, 0x00, 0x7, 0);
+        }
+    }
 }

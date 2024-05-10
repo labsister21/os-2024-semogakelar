@@ -14,6 +14,8 @@
 #define KEYBOARD_DATA_PORT     0x60
 #define EXTENDED_SCANCODE_BYTE 0xE0
 
+#define KEYBOARD_BUFFER_SIZE 256
+
 /**
  * keyboard_scancode_1_to_ascii_map[256], Convert scancode values that correspond to ASCII printables
  * How to use this array: ascii_char = k[scancode]
@@ -32,7 +34,8 @@ extern const char keyboard_scancode_1_to_ascii_map[256];
 struct KeyboardDriverState {
     bool read_extended_mode;
     bool keyboard_input_on;
-    char keyboard_buffer;
+    char keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+    uint8_t buffer_index;
 } __attribute((packed));
 
 
@@ -57,5 +60,17 @@ void get_keyboard_buffer(char *buf);
  * Will start listen and process keyboard scancode if keyboard_input_on.
  */
 void keyboard_isr(void);
+
+// Returns true if keyboard input is on
+bool is_keyboard_blocking(void);
+
+// Puts a char to the screen
+void putchar(char s, uint32_t color);
+
+// Puts a string to the screen
+void puts(char* s, uint32_t len, uint32_t color);
+
+// Resets the write position
+void reset_write_position();
 
 #endif

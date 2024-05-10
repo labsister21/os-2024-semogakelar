@@ -5,10 +5,9 @@
 #include "header/memory/paging.h"
 #include "header/filesystem/fat32.h"
 #include "header/driver/framebuffer.h"
+#include "header/stdlib/string.h"
+#include "header/driver/keyboard.h"
 
-// Keperluan penulisan di terminal
-uint8_t row_now = 0;
-uint8_t col_now = 0;
 
 void io_wait(void) {
     out(0x80, 0);
@@ -48,20 +47,6 @@ void activate_keyboard_interrupt(void) {
     out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
 }
 
-void main_interrupt_handler(struct InterruptFrame frame) {
-    switch (frame.int_number) {
-        case PAGE_FAULT:
-            __asm__("hlt");
-            break;        
-        case IRQ_KEYBOARD + PIC1_OFFSET:
-            keyboard_isr();
-            break;
-        case 0x30:
-            syscall(frame);
-            break;
-    }
-}
-
 struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
 };
@@ -74,54 +59,27 @@ void set_tss_kernel_current_stack(void) {
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
 }
 
-void putchar(char s, uint32_t color) {
-    if (s == '\n') {
-        row_now++;
-        col_now = 0;
-    } else if (s == '\b') {
-        if (col_now > 0) col_now--; else if (row_now > 0) row_now--, col_now = 80;
-        while (*(FRAMEBUFFER_MEMORY_OFFSET + (row_now*80 + col_now)*2) == '\0') {
-            if (col_now > 0) {
-                col_now--;
-            } else if (row_now > 0) {
-                row_now--;
-                col_now = 80;
-            }
-        }
-    } else if (s == '\t') {
-        for (int i = 0; i < 2; i++) {
-            framebuffer_write(row_now,col_now,' ', color, 0x00);
-            col_now++;
-        }
-    } else if (s != 0) {
-        framebuffer_write(row_now, col_now, s, color, 0x00);
-        col_now++;
-    }
-    framebuffer_write(row_now, col_now, '\0', 0xF, 0);
-    framebuffer_set_cursor(row_now, col_now);
-}
-
-void puts(char* s, uint32_t len, uint32_t color) {
-    for (uint32_t i = 0; i < len; i++) {
-        char *currentChar = s + i;
-        if (*currentChar == '\n') {
-            row_now++;
-            col_now = 0;
-        } else {
-            framebuffer_write(row_now, col_now, *currentChar, color, 0x00);
-            col_now++;
-        }
-    }
-    framebuffer_set_cursor(row_now, col_now);
-}
-
 void syscall(struct InterruptFrame frame) {
     switch (frame.cpu.general.eax) {
         case 0:
             *((int8_t*) frame.cpu.general.ecx) = read(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
             break;
+        case 1:
+            *((int8_t*) frame.cpu.general.ecx) = read_directory(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            break;
+        case 2:
+            *((int8_t*) frame.cpu.general.ecx) = write(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
+            break;
+        case 3:
+            *((int8_t*) frame.cpu.general.ecx) = Delete(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
+            break;
         case 4:
-            get_keyboard_buffer((char*) frame.cpu.general.ebx);
+            keyboard_state_activate();
+            __asm__("sti");
+            while (is_keyboard_blocking());
+            char buf[KEYBOARD_BUFFER_SIZE];
+            get_keyboard_buffer(buf);
+            memcpy((char*) frame.cpu.general.ebx, buf, frame.cpu.general.ecx);
             break;
         case 5:
             putchar(*((char*)frame.cpu.general.ebx), frame.cpu.general.ecx);
@@ -135,6 +93,26 @@ void syscall(struct InterruptFrame frame) {
             break;
         case 7: 
             keyboard_state_activate();
+            break;
+        case 8:
+            framebuffer_clear();
+            reset_write_position();
+            break;
+        case 9:
+            read_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
+    }
+}
+
+void main_interrupt_handler(struct InterruptFrame frame) {
+    switch (frame.int_number) {
+        case PAGE_FAULT:
+            __asm__("hlt");
+            break;        
+        case IRQ_KEYBOARD + PIC1_OFFSET:
+            keyboard_isr();
+            break;
+        case 0x30:
+            syscall(frame);
             break;
     }
 }
