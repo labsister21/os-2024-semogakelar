@@ -214,7 +214,7 @@ int8_t write(struct FAT32DriverRequest request) {
 
     // Check if there's already an entry with the same name and ext and attribute (in the parent folder)
     bool found = false;
-    uint32_t idx = 0, empty_entry_idx = -1, number_of_empty_entry = 0;
+    uint32_t idx = 2, empty_entry_idx = -1, number_of_empty_entry = 0;
     while (idx < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry) &&
         !(memcmp(parent_directory_table.table[idx].name, request.name, sizeof(request.name)) == 0 &&
           memcmp(parent_directory_table.table[idx].ext, request.ext, sizeof(request.ext)) == 0 &&

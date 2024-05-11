@@ -41,7 +41,7 @@ void parse_path(char* str, char paths[][512], uint32_t* num_of_directory);
 void print_current_directory();
 
 // Update directory table to the given cluster number
-void update_directory_table(struct FAT32DirectoryTable dir_table, uint32_t directory_cluster_number);
+void update_directory_table(struct FAT32DirectoryTable* dir_table, uint32_t directory_cluster_number);
 
 // Print path up to path[idx] to screen
 void print_path(char path[][512], uint32_t idx, uint8_t color);

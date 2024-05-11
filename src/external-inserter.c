@@ -30,6 +30,32 @@ void write_blocks(const void *ptr, uint32_t logical_block_address, uint8_t block
     }
 }
 
+int8_t parse_file_name(char* file_name, char* name, char* ext) {
+    size_t idx1 = 0, idx2 = 0;
+    while (idx1 < strlen(file_name) && file_name[idx1] != '.' && idx2 < 8) {
+        name[idx2] = file_name[idx1];
+        idx1++; idx2++;
+    }
+
+    if (idx2 == 8 && idx1 < strlen(file_name) && file_name[idx1] != '.') {
+        puts("error: filename length must not exceed 8!");
+        return 1;
+    }
+
+    idx1++; idx2 = 0;
+    while (idx1 < strlen(file_name) && idx2 < 3) {
+        ext[idx2] = file_name[idx1];
+        idx1++; idx2++;
+    }
+
+    if (idx1 < strlen(file_name)) {
+        puts("error: file ext length must not exceed 3!");
+        return -1;
+    }
+
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 4) {
         fprintf(stderr, "inserter: ./inserter <file to insert> <parent cluster index> <storage>\n");
@@ -60,13 +86,21 @@ int main(int argc, char *argv[]) {
 
     // FAT32 operations
     initialize_filesystem_fat32();
+    char filename[20] = {0};
     struct FAT32DriverRequest request = {
         .buf         = file_buffer,
         .ext         = "\0\0\0",
         .buffer_size = filesize,
     };
+
     sscanf(argv[2], "%u",  &request.parent_cluster_number);
-    sscanf(argv[1], "%8s", request.name);
+    sscanf(argv[1], "%s", filename);
+
+    char name[8] = {0}, ext[3] = {0};
+    parse_file_name(filename, name, ext);
+    memcpy(request.name, name, 8);
+    memcpy(request.ext, ext, 3);
+
     int retcode = write(request);
     switch (retcode) {
         case 0:  puts("Write success"); break;

@@ -3,6 +3,9 @@
 #include "header/shell/user-shell.h"
 #include "header/shell/cd.h"
 #include "header/shell/mkdir.h"
+#include "header/shell/ls.h"
+#include "header/shell/cat.h"
+#include "header/shell/cp.h"
 
 uint32_t current_directory = ROOT_CLUSTER_NUMBER;
 char current_path[512];
@@ -32,8 +35,8 @@ void print_path(char path[][512], uint32_t idx, uint8_t color) {
     }
 }
 
-void update_directory_table(struct FAT32DirectoryTable dir_table, uint32_t directory_cluster_number) {
-    syscall(9, (uint32_t) &dir_table, directory_cluster_number, 0);
+void update_directory_table(struct FAT32DirectoryTable* dir_table, uint32_t directory_cluster_number) {
+    syscall(9, (uint32_t) dir_table, directory_cluster_number, 0);
 }
 
 void ignore_blanks(char* str, uint32_t* idx) {
@@ -130,7 +133,7 @@ int main(void) {
     uint8_t args_count;
 
     memset((void*) &current_dir_table, 0, sizeof(struct FAT32DirectoryTable));
-    update_directory_table(current_dir_table, ROOT_CLUSTER_NUMBER);
+    update_directory_table(&current_dir_table, ROOT_CLUSTER_NUMBER);
 
     current_path[0] = '~';
     for (int i = 1; i < 512; i++)
@@ -157,10 +160,25 @@ int main(void) {
             cd(args, args_count);
         }
         else if (strlen(cmd) == 5 && memcmp(cmd, "clear", 5) == 0) {
-            syscall(8, 0, 0, 0);
+            if (args[0][0] != '\0') {
+                put("error: too many arguments, expected 0 argument\n", LIGHT_RED);
+                put("Usage: clear\n", LIGHT_GREY);
+            }
+            else {
+                syscall(8, 0, 0, 0);
+            }
+        }
+        else if (strlen(cmd) == 2 && memcmp(cmd, "ls", 2) == 0) {
+            ls(args_count);
         }
         else if (strlen(cmd) == 5 && memcmp(cmd, "mkdir", 5) == 0) {
             mkdir(args, args_count);
+        }
+        else if (strlen(cmd) == 3 && memcmp(cmd, "cat", 3) == 0) {
+            cat(args, args_count);
+        }
+        else if (strlen(cmd) == 2 && memcmp(cmd, "cp", 3) == 0) {
+            cp(args, args_count);
         }
         else if (!(cmd[0] == '\0')) {
             put("error: no such command with the name '", LIGHT_RED);
