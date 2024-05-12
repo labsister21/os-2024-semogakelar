@@ -26,5 +26,5 @@ void cat(char args[][512], int args_count) {
             put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
             put("Usage: cat <directory_path_to_file><ext>\n", LIGHT_GREY);
             break;       
-    }
+    };
 }

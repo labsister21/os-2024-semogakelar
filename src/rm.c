@@ -52,15 +52,8 @@ void rm(char args[][512], int args_count) {
                 put("'\n", LIGHT_RED);
                 break;
             case 2:
-                put("error: ", LIGHT_RED);
-                if (num_of_directory >= 2) {
-                    put("'", LIGHT_RED);
-                    print_path(path, num_of_directory - 2, LIGHT_RED);
-                }
-                else {
-                    put("current directory '", LIGHT_RED);
-                    put(current_dir_table.table[0].name, LIGHT_RED);
-                }
+                put("error: Folder '", LIGHT_RED);
+                print_path(path, num_of_directory - 1, LIGHT_RED);
                 put("' is not empty\n", LIGHT_RED);
                 break;
             default:
