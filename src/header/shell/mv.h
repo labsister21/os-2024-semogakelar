@@ -9,4 +9,8 @@ void mv(char args[][512], int args_count);
 
 void rename(char*, char*);
 
+bool contains_invalid_char(char[],char);
+
+void move(char args0[], char args1[]);
+
 #endif

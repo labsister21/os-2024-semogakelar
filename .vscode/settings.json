@@ -12,7 +12,9 @@
     "stringdinarray": "c",
     "cd.h": "c",
     "string.h": "c",
-    "cp.h": "c"
+    "cp.h": "c",
+    "mv.h": "c",
+    "mkdir.h": "c"
   },
   "C_Cpp_Runner.msvcBatchPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvarsall.bat",
   "C_Cpp_Runner.cCompilerPath": "gcc",

@@ -72,6 +72,7 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/cat.c -o cat.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/cp.c -o cp.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/mv.c -o mv.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/rm.c -o rm.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/find.c -o find.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/string.c -o string.o
 	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 --oformat=binary \
@@ -83,6 +84,7 @@ user-shell:
 		cat.o \
 		cp.o \
 		mv.o \
+		rm.o \
 		find.o \
 		mkdir.o \
 		-o $(OUTPUT_FOLDER)/shell
@@ -96,6 +98,7 @@ user-shell:
 		cat.o \
 		cp.o \
 		mv.o \
+		rm.o \
 		find.o \
 		mkdir.o \
 		-o $(OUTPUT_FOLDER)/shell_elf

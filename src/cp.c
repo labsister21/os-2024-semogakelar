@@ -37,7 +37,7 @@ int8_t read_file(char path[][512], uint32_t num_of_directory, struct ClusterBuff
     char path_temp[512];
     memcpy(path_temp, current_path, sizeof(path_temp));
 
-    int8_t ret_val = change_path(path, num_of_directory - 1);
+    int8_t ret_val = change_path(path, num_of_directory - 1 , &current_dir_table, &current_directory);
     if (ret_val != 0) {
         cancel_change_path(current_directory_temp, path_temp);
         return ret_val;

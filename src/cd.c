@@ -2,7 +2,7 @@
 
 struct FAT32DirectoryTable temp_dir_table;
 
-int8_t change_path(char path[][512], int num_of_directory) {
+int8_t change_path(char path[][512], int num_of_directory, struct FAT32DirectoryTable* dir_table, uint32_t *cluster) {
     if (num_of_directory == 0) {
         return 0;
     }
@@ -48,8 +48,8 @@ int8_t change_path(char path[][512], int num_of_directory) {
     }
 
     if (err_val == 0) {
-        memcpy(&current_dir_table, &temp_dir_table, sizeof(struct FAT32DirectoryTable));
-        current_directory = temp_parent_cluster_number;
+        memcpy(&dir_table, &temp_dir_table, sizeof(struct FAT32DirectoryTable));
+        *cluster = temp_parent_cluster_number;
     }
 
     return err_val;
@@ -93,7 +93,7 @@ void cd(char args[][512], int args_count) {
             memset(path, 0, 512*512);
             uint32_t num_of_directory = 0;
             parse_path(args[0], path, &num_of_directory);
-            change_path(path, num_of_directory);
+            change_path(path, num_of_directory, &current_dir_table, &current_directory);
             break;
         default:
             put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
