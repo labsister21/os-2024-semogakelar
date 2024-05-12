@@ -22,7 +22,7 @@ disk:
 run: all
 	qemu-system-i386 -s -S -drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 all: build
-build: disk insert-shell iso
+build: disk insert-shell insert-files iso
 clean:
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
 kernel:
@@ -68,12 +68,22 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/user-shell.c -o user-shell.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/cd.c -o cd.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/mkdir.c -o mkdir.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/ls.c -o ls.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/cat.c -o cat.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/cp.c -o cp.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/mv.c -o mv.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/find.c -o find.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/string.c -o string.o
 	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 --oformat=binary \
 		crt0.o \
 		user-shell.o \
 		string.o \
 		cd.o \
+		ls.o \
+		cat.o \
+		cp.o \
+		mv.o \
+		find.o \
 		mkdir.o \
 		-o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
@@ -82,6 +92,11 @@ user-shell:
 		user-shell.o \
 		string.o \
 		cd.o \
+		ls.o \
+		cat.o \
+		cp.o \
+		mv.o \
+		find.o \
 		mkdir.o \
 		-o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...
@@ -90,3 +105,6 @@ user-shell:
 insert-shell: inserter user-shell
 	@echo Inserting shell into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter shell 2 $(DISK_NAME).bin
+insert-files: inserter user-shell
+	@echo Inserting additional files into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter ngevvibu.txt 2 $(DISK_NAME).bin
