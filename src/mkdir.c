@@ -9,12 +9,12 @@ void mkdir(char args[][512], int args_count) {
             put("Usage: mkdir <directory_path>\n", WHITE);
             break;
         case 1:
-            char path[512][512];
+            {char path[512][512];
             memset(path, 0, 512*512);
             uint32_t num_of_directory = 0;
             parse_path(args[0], path, &num_of_directory);
             create_directory(path, num_of_directory);
-            break;
+            break;}
         default:
             put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
             put("Usage: mkdir <directory_path>\n", WHITE);

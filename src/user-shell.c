@@ -6,6 +6,7 @@
 #include "header/shell/ls.h"
 #include "header/shell/cat.h"
 #include "header/shell/cp.h"
+#include "header/shell/rm.h"
 
 uint32_t current_directory = ROOT_CLUSTER_NUMBER;
 char current_path[512];
@@ -179,6 +180,9 @@ int main(void) {
         }
         else if (strlen(cmd) == 2 && memcmp(cmd, "cp", 3) == 0) {
             cp(args, args_count);
+        }
+        else if (strlen(cmd) == 2 && memcmp(cmd, "rm", 3) == 0) {
+            rm(args, args_count);
         }
         else if (!(cmd[0] == '\0')) {
             put("error: no such command with the name '", LIGHT_RED);
