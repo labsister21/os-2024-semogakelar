@@ -45,9 +45,56 @@
 #define PROCESS_CREATE_FAIL_NOT_ENOUGH_MEMORY    3
 #define PROCESS_CREATE_FAIL_FS_READ_FAILURE      4
 
+struct ProcessManagerState {
+    int active_process_count;
+};
 
+/**
+ * Contain information needed for task to be able to get interrupted and resumed later
+ *
+ * @param cpu                         All CPU register state
+ * @param eip                         CPU instruction counter to resume execution
+ * @param eflags                      Flag register to load before resuming the execution
+ * @param page_directory_virtual_addr CPU register CR3, containing pointer to active page directory
+ */
+struct Context {
+    // TODO: Add important field here
+    struct CPURegister cpu;
+    uint32_t eip;
+    uint8_t eflags;
+    struct PageDirectory* page_directory_virtual_addr;
+};
 
+typedef enum PROCESS_STATE {
+    // TODO: Add process states
+    NEW,
+    WAITING,
+    READY,
+    RUNNING,
+    TERMINATED
+} PROCESS_STATE;
 
+/**
+ * Structure data containing information about a process
+ *
+ * @param metadata Process metadata, contain various information about process
+ * @param context  Process context used for context saving & switching
+ * @param memory   Memory used for the process
+ */
+struct ProcessControlBlock {
+    struct {
+        uint32_t pid;
+        char* process_name;
+        PROCESS_STATE state;
+        uint32_t ppid;
+    } metadata;
+    struct Context context;
+    struct {
+        void     *virtual_addr_used[PROCESS_PAGE_FRAME_COUNT_MAX];
+        uint32_t page_frame_used_count;
+    } memory;
+};
+extern struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX];
 
 /**
  * Get currently running process PCB pointer
@@ -73,5 +120,11 @@ int32_t process_create_user_process(struct FAT32DriverRequest request);
  * @return    True if process destruction success
  */
 bool process_destroy(uint32_t pid);
+
+int32_t process_list_get_inactive_index();
+
+uint32_t process_generate_new_pid();
+
+uint32_t ceil_div(uint32_t a, uint32_t b);
 
 #endif

@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "header/memory/paging.h"
 #include "header/process/process.h"
+#include "header/stdlib/string.h"
 
 __attribute__((aligned(0x1000))) struct PageDirectory _paging_kernel_page_directory = {
     .table = {
@@ -150,18 +151,18 @@ struct PageDirectory* paging_create_new_page_directory(void) {
     if (i == PAGING_DIRECTORY_TABLE_MAX_COUNT) return NULL;
 
     page_directory_manager.page_directory_used[i] = true;
-
-    struct PageDirectory* new_page_directory = (struct PageDirectory*)malloc(sizeof(struct PageDirectory));
-    if (new_page_directory == NULL) {
-        return NULL;
-    }
-
-    new_page_directory->table[0x300].flag.present_bit = 1;
-    new_page_directory->table[0x300].flag.write_bit = 1;
-    new_page_directory->table[0x300].flag.use_pagesize_4_mb = 1;
-    new_page_directory->table[0x300].lower_address = 0;
-
-    return new_page_directory;
+    struct PageDirectory temp = {
+        .table = {
+            [0x300] = {
+                .flag.present_bit       = 1,
+                .flag.write_bit         = 1,
+                .flag.use_pagesize_4_mb = 1,
+                .lower_address          = 0,
+            }
+        }
+    };
+    memcpy(&page_directory_list[i], &temp, sizeof(struct PageDirectory));
+    return &page_directory_list[i];
 }
 
 bool paging_free_page_directory(struct PageDirectory *page_dir) {
@@ -172,11 +173,15 @@ bool paging_free_page_directory(struct PageDirectory *page_dir) {
      * - Return true
      */
     int i = 0;
-    while (&page_directory_list[i] != page_dir && i < PAGING_DIRECTORY_TABLE_MAX_COUNT) { i++; }
+    while (i < PAGING_DIRECTORY_TABLE_MAX_COUNT && &page_directory_list[i] != page_dir)
+    {
+        i++;
+    }
     if (i == PAGING_DIRECTORY_TABLE_MAX_COUNT) return false;
 
-    free(page_dir);
     page_directory_manager.page_directory_used[i] = false;
+    memset(page_dir, 0, sizeof(struct PageDirectory));
+    
     return true;
 }
 
