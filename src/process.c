@@ -43,7 +43,37 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
     int32_t p_index = process_list_get_inactive_index();
     struct ProcessControlBlock *new_pcb = &(_process_list[p_index]);
 
+    // Pembuatan virtual address space baru dengan page directory
+    struct PageDirectory* newPage = paging_create_new_page_directory();
+    new_pcb->context.page_directory_virtual_addr = newPage;
+    
+    // Membaca dan melakukan load executable dari file system ke memory baru
+    struct PageDirectory* tempPage = paging_get_current_page_directory_addr();
+    paging_use_page_directory(newPage);
+    int8_t ret_val = read(request);
+    if (ret_val != 0) {
+        paging_free_page_directory(newPage);
+        return ret_val;
+    }
+
+    new_pcb->memory.page_frame_used_count = 0;
+    paging_allocate_user_page_frame(newPage, new_pcb->memory.virtual_addr_used[new_pcb->memory.page_frame_used_count]);
+    new_pcb->memory.page_frame_used_count++;
+
+    memcpy(new_pcb->memory.virtual_addr_used[new_pcb->memory.page_frame_used_count], request.buf, PAGE_FRAME_SIZE);
+    paging_use_page_directory(tempPage);
+
+    // Menyiapkan state & context awal untuk program
+    new_pcb->context.eflags |= CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
+    new_pcb->context.eip = 0;
+    new_pcb->context.cpu; // MASIH ERROR
+
+    // Mencatat semua informasi penting process ke metadata PCB
+    new_pcb->metadata.state = READY;
+    new_pcb->metadata.process_name = request.name;
     new_pcb->metadata.pid = process_generate_new_pid();
+
+    goto exit_cleanup;
 
 exit_cleanup:
     return retcode;
