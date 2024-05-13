@@ -12,6 +12,9 @@ int8_t change_path(char path[][512], int num_of_directory) {
     memcpy(&temp_dir_table, &current_dir_table, sizeof(struct FAT32DirectoryTable));
 
     int8_t err_val = 0;
+    char path_temp[512][512] = {0};
+    memcpy(path_temp, current_path, 512*512);
+
     while (err_val == 0 && idx < num_of_directory) {
         if (strlen(path[idx]) == 2 && memcmp(path[idx], "..", 2) == 0) {
             if (strlen(current_path) == 1 && memcmp(current_path, "/", 1) == 0) {
@@ -50,6 +53,8 @@ int8_t change_path(char path[][512], int num_of_directory) {
     if (err_val == 0) {
         memcpy(&current_dir_table, &temp_dir_table, sizeof(struct FAT32DirectoryTable));
         current_directory = temp_parent_cluster_number;
+    } else {
+        memcpy(current_path, path_temp, 512*512);
     }
 
     return err_val;
