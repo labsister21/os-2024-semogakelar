@@ -100,6 +100,10 @@ void syscall(struct InterruptFrame frame) {
             break;
         case 9:
             read_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
+            break;
+        case 10:
+            write_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
+            break;
     }
 }
 
