@@ -18,13 +18,7 @@ void mv(char args[][512], int args_count) {
             parse_path(args[0], src_path, &num_src_directory);
             parse_path(args[0], dest_path, &num_dest_directory);
 
-            // if ()
             move(args[0], args[1]);
-            // if (contains_invalid_char(args[1], '/') || contains_invalid_char(args[1], '\\')){
-            // } else {
-            //     rename(args[0], args[1]);
-            //     put("success\n", GREEN);
-            // }
             break;
         default:
             put("error: too many arguments, expected 2 argument\n", LIGHT_RED);
@@ -59,7 +53,7 @@ void move(char args0[], char args1[]) {
     bool isfile;
     char temPath[512];
     memcpy(&temPath, &current_path, 512);
-    change_path(srcPath, num_src_directory - 1, &parentSrc, &parentSrcCluster);
+    change_path_mv(srcPath, num_src_directory - 1, &parentSrc, &parentSrcCluster);
     memcpy(&current_path, &temPath, 512);
     int idx = 2;
     while (idx < 64) {
@@ -74,7 +68,7 @@ void move(char args0[], char args1[]) {
         idx++;
     }
     if (!isfile) {
-        change_path(srcPath, num_src_directory, &srcDirectory, &srcCluster);
+        change_path_mv(srcPath, num_src_directory, &srcDirectory, &srcCluster);
         memcpy(&current_path, &temPath, 512);
     }
     put("mulai move\n", WHITE);
@@ -82,7 +76,7 @@ void move(char args0[], char args1[]) {
     memcpy(&srcDirectory, &current_dir_table, CLUSTER_SIZE);
     put("mulai move\n", WHITE);
 
-    int ret = change_path(destPath, num_dest_directory, &destDirectory, &destCluster);
+    int ret = change_path_mv(destPath, num_dest_directory, &srcDirectory, &srcCluster);
     put("mulai move\n", WHITE);
     memcpy(&current_path, &temPath, 512);
     if (ret != 0){
@@ -105,7 +99,7 @@ void move(char args0[], char args1[]) {
         put(args1, WHITE);
         put(" is full, mv failed\n", LIGHT_RED);
     } else {
-        memset(&parentSrc.table[idx], 0, sizeof(struct FAT32DirectoryEntry));\
+        memset(&parentSrc.table[idx], 0, sizeof(struct FAT32DirectoryEntry));
         syscall(10, (uint32_t) &parentSrc, parentSrcCluster, 0);
         if (!isfile) {
             memcpy(&srcDirectory.table[1], &destDirectory.table[0], sizeof(srcDirectory.table[1]));
@@ -161,4 +155,58 @@ void rename(char path[], char newName[]) {
         }
     }
     cancel_change_path(clusterInitial, temPath);
+}
+
+int8_t change_path_mv(char path[][512], int num_of_directory, struct FAT32DirectoryTable* dir_table, uint32_t* cluster) {
+    struct FAT32DirectoryTable temp_dir_table;
+    if (num_of_directory == 0) {
+        return 0;
+    }
+    
+    int32_t idx = 0;
+    uint32_t temp_parent_cluster_number = current_directory;
+    memcpy(&temp_dir_table, &current_dir_table, sizeof(struct FAT32DirectoryTable));
+
+    int8_t err_val = 0;
+    while (err_val == 0 && idx < num_of_directory) {
+        if (strlen(path[idx]) == 2 && memcmp(path[idx], "..", 2) == 0) {
+            if (strlen(current_path) == 1 && memcmp(current_path, "/", 1) == 0) {
+                continue;
+            }
+            temp_parent_cluster_number = temp_dir_table.table[1].cluster_low | temp_dir_table.table[1].cluster_high << 16;
+            update_directory_table(&temp_dir_table, temp_parent_cluster_number);
+            retract_current_path();
+        }
+        else if (!(strlen(path[idx]) == 1 && memcmp(path[idx], ".", 1) == 0)) {
+            err_val = change_directory(path[idx], &temp_parent_cluster_number);
+            switch (err_val) {
+                case 1:
+                    put("error: '", LIGHT_RED);
+                    print_path(path, idx, LIGHT_RED);
+                    put("' is a file, not a directory\n", LIGHT_RED);
+                    break;
+                case 2:
+                    put("error: no such directory with the name '", LIGHT_RED);
+                    put(path[idx], LIGHT_RED);
+                    put("' in ", LIGHT_RED);
+                    if (idx > 0) {
+                        put("'", LIGHT_RED);
+                        print_path(path, idx - 1, LIGHT_RED);
+                        put("'", LIGHT_RED);
+                    } else {
+                        put("current directory", LIGHT_RED);
+                    }
+                    put("\n", LIGHT_RED);
+                    break;
+            }
+        }
+        idx++;
+    }
+
+    if (err_val == 0) {
+        memcpy(&dir_table, &temp_dir_table, sizeof(struct FAT32DirectoryTable));
+        *cluster = temp_parent_cluster_number;
+    }
+
+    return err_val;
 }

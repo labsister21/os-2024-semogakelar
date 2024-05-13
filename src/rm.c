@@ -18,7 +18,7 @@ void rm(char args[][512], int args_count) {
             uint32_t num_of_directory = 0;
             parse_path(args[0], path, &num_of_directory);
             
-            int8_t ret_val = change_path(path, num_of_directory-1, &current_dir_table, &current_directory);
+            int8_t ret_val = change_path(path, num_of_directory-1);
             if (ret_val != 0) {
                 cancel_change_path(current_directory_temp, path_temp);
                 return;

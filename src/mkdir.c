@@ -33,7 +33,7 @@ int8_t write_to(char* name, char path[][512], uint32_t num_of_directory, struct 
     char path_temp[512];
     memcpy(path_temp, current_path, sizeof(path_temp));
 
-    int8_t ret_val = change_path(path, (is_directory)? num_of_directory-1 : num_of_directory, &current_dir_table, &current_directory);
+    int8_t ret_val = change_path(path, (is_directory)? num_of_directory-1 : num_of_directory);
     if (ret_val != 0) {
         cancel_change_path(current_directory_temp, path_temp);
         return ret_val;
