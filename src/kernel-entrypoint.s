@@ -100,6 +100,9 @@ kernel_execute_user_program:
     mov  eax, ecx
     push eax ; eip register to jump back
 
+    mov ebp, 0xBFFFFFFC
+    mov esp, 0xBFFFFFFC
+    
     iret
 set_tss_register:
     mov ax, 0x28 | 0 ; GDT TSS Selector, ring 0
