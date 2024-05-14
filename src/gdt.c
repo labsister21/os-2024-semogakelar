@@ -1,4 +1,5 @@
 #include "header/cpu/gdt.h"
+#include "header/cpu/interrupt.h"
 
 /**
  * global_descriptor_table, predefined GDT.
@@ -8,7 +9,6 @@
 struct GlobalDescriptorTable global_descriptor_table = {
     .table = {
         {
-            // TODO : Implement
             .segment_low = 0,
             .base_low = 0,
             .base_mid = 0,
@@ -24,7 +24,6 @@ struct GlobalDescriptorTable global_descriptor_table = {
             .base_high = 0
         },
         {
-            // TODO : Implement
             .segment_low = 0xFFFF,
             .base_low = 0,
             .base_mid = 0,
@@ -40,7 +39,6 @@ struct GlobalDescriptorTable global_descriptor_table = {
             .base_high = 0
         },
         {
-            // TODO : Implement
             .segment_low = 0xFFFF,
             .base_low = 0,
             .base_mid = 0,
@@ -54,7 +52,53 @@ struct GlobalDescriptorTable global_descriptor_table = {
             .default_op_size = 1,
             .granularity = 1,
             .base_high = 0
-        }
+        },
+        {
+            .segment_low = 0xFFFF,
+            .base_low = 0,
+            .base_mid = 0,
+            .type_bit = 0xA,
+            .non_system = 1,
+            .desc_privilege_lvl = 0x3,
+            .present_bit = 1,
+            .segment_mid = 0xF,
+            .available = 0,
+            .code_segment = 0,
+            .default_op_size = 1,
+            .granularity = 1,
+            .base_high = 0
+        },
+        {
+            .segment_low = 0xFFFF,
+            .base_low = 0,
+            .base_mid = 0,
+            .type_bit = 0x2,
+            .non_system = 1,
+            .desc_privilege_lvl = 0x3,
+            .present_bit = 1,
+            .segment_mid = 0xF,
+            .available = 0,
+            .code_segment = 0,
+            .default_op_size = 1,
+            .granularity = 1,
+            .base_high = 0
+        },
+        {
+            .segment_low = sizeof(struct TSSEntry),
+            .base_low = 0,
+            .base_mid = 0,
+            .type_bit = 0x9,
+            .non_system = 0,
+            .desc_privilege_lvl = 0,
+            .present_bit = 1,
+            .segment_mid = (sizeof(struct TSSEntry) & (0xF << 16)) >> 16,
+            .available = 0,
+            .code_segment = 0,
+            .default_op_size = 1,
+            .granularity = 0,
+            .base_high = 0
+        },
+        {0}
     }
 };
 
@@ -64,8 +108,14 @@ struct GlobalDescriptorTable global_descriptor_table = {
  * From: https://wiki.osdev.org/Global_Descriptor_Table, GDTR.size is GDT size minus 1.
  */
 struct GDTR _gdt_gdtr = {
-    // TODO : Implement, this GDTR will point to global_descriptor_table. 
-    //        Use sizeof operator
     .size = sizeof(global_descriptor_table) - 1,
     .address = &global_descriptor_table
 };
+
+void gdt_install_tss(void) {
+    uint32_t base = (uint32_t) &_interrupt_tss_entry;
+    global_descriptor_table.table[5].base_high = (base & (0xFF << 24)) >> 24;
+    global_descriptor_table.table[5].base_mid  = (base & (0xFF << 16)) >> 16;
+    global_descriptor_table.table[5].base_low  = base & 0xFFFF;
+}
+

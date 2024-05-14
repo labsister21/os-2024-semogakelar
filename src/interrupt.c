@@ -1,6 +1,13 @@
 #include "header/cpu/interrupt.h"
 #include "header/cpu/portio.h"
 #include "header/driver/keyboard.h"
+#include "header/cpu/gdt.h"
+#include "header/memory/paging.h"
+#include "header/filesystem/fat32.h"
+#include "header/driver/framebuffer.h"
+#include "header/stdlib/string.h"
+#include "header/driver/keyboard.h"
+
 
 void io_wait(void) {
     out(0x80, 0);
@@ -40,10 +47,76 @@ void activate_keyboard_interrupt(void) {
     out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
 }
 
+struct TSSEntry _interrupt_tss_entry = {
+    .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
+};
+
+void set_tss_kernel_current_stack(void) {
+    uint32_t stack_ptr;
+    // Reading base stack frame instead esp
+    __asm__ volatile ("mov %%ebp, %0": "=r"(stack_ptr) : /* <Empty> */);
+    // Add 8 because 4 for ret address and other 4 is for stack_ptr variable
+    _interrupt_tss_entry.esp0 = stack_ptr + 8; 
+}
+
+void syscall(struct InterruptFrame frame) {
+    switch (frame.cpu.general.eax) {
+        case 0:
+            *((int8_t*) frame.cpu.general.ecx) = read(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            break;
+        case 1:
+            *((int8_t*) frame.cpu.general.ecx) = read_directory(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            break;
+        case 2:
+            *((int8_t*) frame.cpu.general.ecx) = write(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
+            break;
+        case 3:
+            *((int8_t*) frame.cpu.general.ecx) = Delete(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
+            break;
+        case 4:
+            keyboard_state_activate();
+            __asm__("sti");
+            while (is_keyboard_blocking());
+            char buf[KEYBOARD_BUFFER_SIZE];
+            get_keyboard_buffer(buf);
+            memcpy((char*) frame.cpu.general.ebx, buf, frame.cpu.general.ecx);
+            break;
+        case 5:
+            putchar(*((char*)frame.cpu.general.ebx), frame.cpu.general.ecx);
+            break;
+        case 6:
+            puts(
+                (char*) frame.cpu.general.ebx, 
+                frame.cpu.general.ecx, 
+                frame.cpu.general.edx
+            ); // Assuming puts() exist in kernel
+            break;
+        case 7: 
+            keyboard_state_activate();
+            break;
+        case 8:
+            framebuffer_clear();
+            reset_write_position();
+            break;
+        case 9:
+            read_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
+            break;
+        case 10:
+            write_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
+            break;
+    }
+}
+
 void main_interrupt_handler(struct InterruptFrame frame) {
     switch (frame.int_number) {
+        case PAGE_FAULT:
+            __asm__("hlt");
+            break;        
         case IRQ_KEYBOARD + PIC1_OFFSET:
             keyboard_isr();
+            break;
+        case 0x30:
+            syscall(frame);
             break;
     }
 }
