@@ -11,8 +11,29 @@ void mv(char args[][512], int args_count) {
             put("Usage: mv <directory_path>\n", WHITE);
             break;
         case 2:
-            {move(args[0], args[1]);
-            break;}
+            {
+            char temPath[512];
+            memcpy(&temPath, &current_path, 512);
+            uint32_t initialCluster = current_directory;
+
+            uint32_t num_dest_directory;
+            struct FAT32DirectoryTable tempDir = {0};
+            char destPath[512][512] = {0};
+            parse_path(args[1], destPath, &num_dest_directory);
+            int ret = change_path_mv(destPath, num_dest_directory);
+            memcpy(&tempDir, &current_dir_table, sizeof(struct FAT32DirectoryTable));
+            cancel_change_path(initialCluster, temPath);
+            if (ret == 2){
+                if (current_dir_table.table[0].cluster_low == initialCluster) {
+                    rename(args[0], destPath[num_dest_directory - 1]);
+                } else {
+                    put("error: no such directory with the name \n", LIGHT_RED);
+                }
+            } else {
+                move(args[0], args[1]);
+            }
+            break;
+            }
         default:
             put("error: too many arguments, expected 2 argument\n", LIGHT_RED);
             put("Usage: mv <directory_path>\n", WHITE);
@@ -34,8 +55,8 @@ void move(char args0[], char args1[]) {
     uint32_t num_dest_directory;
     char srcPath[512][512] = {0};
     char destPath[512][512] = {0};
-    parse_path(args0, srcPath, &num_src_directory);
     parse_path(args1, destPath, &num_dest_directory);
+    parse_path(args0, srcPath, &num_src_directory);
     struct FAT32DirectoryTable srcDirectory = {0};
     uint32_t srcCluster = 0;
     struct FAT32DirectoryTable destDirectory = {0};
@@ -136,7 +157,7 @@ void rename(char path[], char newName[]) {
     int clusterInitial = current_directory;
     char temPath[512];
     memcpy(&temPath, &current_path, 512);
-    // change_path(listPath, num_of_directory - 1);
+    change_path(listPath, num_of_directory - 1);
     int indexTable = 0;
     bool found = false;
     while (indexTable < 64) {
@@ -163,7 +184,7 @@ void rename(char path[], char newName[]) {
     cancel_change_path(clusterInitial, temPath);
 }
 
-int8_t change_path_mv(char path[][512], int num_of_directory, struct FAT32DirectoryTable* dir_table, uint32_t* cluster) {
+int8_t change_path_mv(char path[][512], int num_of_directory) {
     struct FAT32DirectoryTable temp_dir_table;
     if (num_of_directory == 0) {
         return 0;
@@ -171,7 +192,7 @@ int8_t change_path_mv(char path[][512], int num_of_directory, struct FAT32Direct
     
     int32_t idx = 0;
     uint32_t temp_parent_cluster_number = current_directory;
-    memcpy(&temp_dir_table, &dir_table, sizeof(struct FAT32DirectoryTable));
+    memcpy(&temp_dir_table, &current_dir_table, sizeof(struct FAT32DirectoryTable));
 
     int8_t err_val = 0;
     while (err_val == 0 && idx < num_of_directory) {
@@ -187,22 +208,8 @@ int8_t change_path_mv(char path[][512], int num_of_directory, struct FAT32Direct
             err_val = change_directory(path[idx], &temp_parent_cluster_number);
             switch (err_val) {
                 case 1:
-                    put("error: '", LIGHT_RED);
-                    print_path(path, idx, LIGHT_RED);
-                    put("' is a file, not a directory\n", LIGHT_RED);
                     break;
                 case 2:
-                    put("error: no such directory with the name '", LIGHT_RED);
-                    put(path[idx], LIGHT_RED);
-                    put("' in ", LIGHT_RED);
-                    if (idx > 0) {
-                        put("'", LIGHT_RED);
-                        print_path(path, idx - 1, LIGHT_RED);
-                        put("'", LIGHT_RED);
-                    } else {
-                        put("current directory", LIGHT_RED);
-                    }
-                    put("\n", LIGHT_RED);
                     break;
             }
         }
@@ -210,8 +217,8 @@ int8_t change_path_mv(char path[][512], int num_of_directory, struct FAT32Direct
     }
 
     if (err_val == 0) {
-        memcpy(dir_table, &temp_dir_table, sizeof(struct FAT32DirectoryTable));
-        *cluster = temp_parent_cluster_number;
+        memcpy(&current_dir_table, &temp_dir_table, sizeof(struct FAT32DirectoryTable));
+        current_directory = temp_parent_cluster_number;
     }
 
     return err_val;
