@@ -3,6 +3,51 @@
 #include "header/stdlib/string.h"
 #include "header/cpu/gdt.h"
 
+extern void process_context_switch(struct Context* current, struct Context* next);
+
+void scheduler_init(void) {
+    // Inisialisasi semua entri dalam daftar proses menjadi tidak aktif
+    for (int i = 0; i < PROCESS_COUNT_MAX; i++) {
+        process_manager_state.process_list[i].metadata.state = NEW;
+    }
+    // Atur jumlah proses aktif menjadi 0
+    process_manager_state.active_process_count = 0;
+}
+
+void scheduler_switch_to_next_process(void) {
+    struct ProcessControlBlock* current_pcb = process_get_current_running_pcb_pointer();
+    struct ProcessControlBlock* next_pcb = NULL;
+
+    if (current_pcb) {
+        // Save the current process context
+        current_pcb->metadata.state = READY;
+    }
+
+    // Select the next process to run (Round Robin)
+    int next_index = -1;
+    for (int i = 0; i < PROCESS_COUNT_MAX; i++) {
+        if (process_manager_state.process_list[i].metadata.state == READY) {
+            next_index = i;
+            break;
+        }
+    }
+
+    if (next_index != -1) {
+        next_pcb = &(process_manager_state.process_list[next_index]);
+        next_pcb->metadata.state = RUNNING;
+    } else {
+        // No READY process found, fallback to idle or panic
+        // For simplicity, we assume there is always at least one READY process
+        return;
+    }
+
+    if (current_pcb) {
+        process_context_switch(&(current_pcb->context), &(next_pcb->context));
+    } else {
+        process_context_switch(NULL, &(next_pcb->context));
+    }
+}
+
 struct ProcessManagerState process_manager_state = {
     .process_list = {0},
     .active_process_count = 0,

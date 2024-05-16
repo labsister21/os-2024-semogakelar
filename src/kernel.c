@@ -25,9 +25,6 @@ void kernel_setup(void) {
     gdt_install_tss();
     set_tss_register();
 
-    // // Allocate first 4 MiB virtual memory
-    // paging_allocate_user_page_frame(&_paging_kernel_page_directory, (uint8_t*) 0);
-
     // Write shell into memory
     struct FAT32DriverRequest request = {
         .buf                   = (uint8_t*) 0,
@@ -37,12 +34,10 @@ void kernel_setup(void) {
         .buffer_size           = 0x100000,
     };
 
-    // Set TSS $esp pointer and jump into shell 
+    // Set TSS.esp0 for interprivilege interrupt
     set_tss_kernel_current_stack();
 
+    // Create init process and execute it
     process_create_user_process(request);
-    paging_use_page_directory(process_manager_state.process_list[0].context.page_directory_virtual_addr);
-    kernel_execute_user_program((void*) 0x0);
-
-    while (true);
+    scheduler_init();
 }
