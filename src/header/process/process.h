@@ -129,6 +129,8 @@ uint32_t process_generate_new_pid();
 
 void scheduler_init(void);
 
+void scheduler_switch_to_next_process(void);
+
 uint32_t ceil_div(uint32_t a, uint32_t b);
 
 #endif

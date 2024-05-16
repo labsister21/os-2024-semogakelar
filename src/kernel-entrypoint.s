@@ -117,9 +117,6 @@ kernel_execute_user_program:
     push eax ; Code segment selector (GDT_USER_CODE_SELECTOR), user privilege
     mov  eax, ecx
     push eax ; eip register to jump back
-
-    mov ebp, 0xBFFFFFFC
-    mov esp, 0xBFFFFFFC
     
     iret
 set_tss_register:
@@ -129,58 +126,31 @@ set_tss_register:
 
 process_context_switch:
     ; Save base address of function argument (ctx)
-    mov eax, [esp + 4]         ; ctx is the first argument, contains pointer to current context
+    
+    lea ecx, [esp + 4]         ; ctx is the first argument, contains pointer to current context
 
-    ; Save all CPU registers to the current context
-    mov [eax + CPU_INDEX_EDI_OFFSET], edi    ; Save edi
-    mov [eax + CPU_INDEX_ESI_OFFSET], esi    ; Save esi
-    mov [eax + CPU_STACK_EBP_OFFSET], ebp    ; Save ebp
-    mov [eax + CPU_STACK_ESP_OFFSET], esp    ; Save esp
-    mov [eax + CPU_GENERAL_EBX_OFFSET], ebx  ; Save ebx
-    mov [eax + CPU_GENERAL_EDX_OFFSET], edx  ; Save edx
-    mov [eax + CPU_GENERAL_ECX_OFFSET], ecx  ; Save ecx
-    mov [eax + CPU_GENERAL_EAX_OFFSET], eax  ; Save eax
-    mov [eax + CPU_SEGMENT_GS_OFFSET], gs    ; Save gs
-    mov [eax + CPU_SEGMENT_FS_OFFSET], fs    ; Save fs
-    mov [eax + CPU_SEGMENT_ES_OFFSET], es    ; Save es
-    mov [eax + CPU_SEGMENT_DS_OFFSET], ds    ; Save ds
+    mov eax, [eax + CPU_SEGMENT_DS_OFFSET]
+    push eax
+    mov eax, ecx
+    push eax
+    mov eax, [eax + CONTEXT_EFLAGS_OFFSET]
+    push eax
+    mov  eax, 0x18 | 0x3
+    push eax ; Code segment selector (GDT_USER_CODE_SELECTOR), user privilege
+    mov eax, [eax + CONTEXT_EIP_OFFSET]
+    push eax
 
-    ; Save eflags
-    pushfd                           ; Push eflags
-    pop dword [eax + CONTEXT_EFLAGS_OFFSET] ; Save eflags to context
+    mov edi, [ecx + CPU_INDEX_EDI_OFFSET]    ; Restore edi
+    mov esi, [ecx + CPU_INDEX_ESI_OFFSET]    ; Restore esi
+    mov ebp, [ecx + CPU_STACK_EBP_OFFSET]    ; Restore ebp
+    mov esp, [ecx + CPU_STACK_ESP_OFFSET]    ; Restore esp
+    mov ebx, [ecx + CPU_GENERAL_EBX_OFFSET]  ; Restore ebx
+    mov edx, [ecx + CPU_GENERAL_EDX_OFFSET]  ; Restore edx
+    mov eax, [ecx + CPU_GENERAL_EAX_OFFSET]  ; Restore eax
+    mov gs, [ecx + CPU_SEGMENT_GS_OFFSET]    ; Restore gs
+    mov fs, [ecx + CPU_SEGMENT_FS_OFFSET]    ; Restore fs
+    mov es, [ecx + CPU_SEGMENT_ES_OFFSET]    ; Restore es
+    mov ds, [ecx + CPU_SEGMENT_DS_OFFSET]    ; Restore ds
+    mov ecx, [ecx + CPU_GENERAL_ECX_OFFSET]  ; Restore ecx
 
-    ; Get eip (instruction pointer)
-    call next_instruction            ; Get the address of next instruction
-next_instruction:
-    pop dword [eax + CONTEXT_EIP_OFFSET]    ; Save eip to context
-
-    ; Save page directory virtual address
-    mov [eax + CONTEXT_PAGE_DIR_OFFSET], ecx  ; Assuming ecx holds the page directory virtual address
-
-    ; Load the new process context
-    mov eax, [esp + 8]         ; ctx is the second argument, contains pointer to new context
-
-    ; Restore CPU registers from the new context
-    mov edi, [eax + CPU_INDEX_EDI_OFFSET]    ; Restore edi
-    mov esi, [eax + CPU_INDEX_ESI_OFFSET]    ; Restore esi
-    mov ebp, [eax + CPU_STACK_EBP_OFFSET]    ; Restore ebp
-    mov esp, [eax + CPU_STACK_ESP_OFFSET]    ; Restore esp
-    mov ebx, [eax + CPU_GENERAL_EBX_OFFSET]  ; Restore ebx
-    mov edx, [eax + CPU_GENERAL_EDX_OFFSET]  ; Restore edx
-    mov ecx, [eax + CPU_GENERAL_ECX_OFFSET]  ; Restore ecx
-    mov eax, [eax + CPU_GENERAL_EAX_OFFSET]  ; Restore eax
-    mov gs, [eax + CPU_SEGMENT_GS_OFFSET]    ; Restore gs
-    mov fs, [eax + CPU_SEGMENT_FS_OFFSET]    ; Restore fs
-    mov es, [eax + CPU_SEGMENT_ES_OFFSET]    ; Restore es
-    mov ds, [eax + CPU_SEGMENT_DS_OFFSET]    ; Restore ds
-
-    ; Restore eflags
-    pop eax                            ; Pop eflags
-    push eax                           ; Push eflags back to stack
-    popfd                              ; Restore eflags from stack
-
-    ; Restore eip
-    mov eax, [eax + CONTEXT_EIP_OFFSET]  ; Get eip from context
-    jmp eax                              ; Jump to the new eip
-
-    ret
+    iret

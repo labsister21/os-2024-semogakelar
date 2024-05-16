@@ -3,51 +3,6 @@
 #include "header/stdlib/string.h"
 #include "header/cpu/gdt.h"
 
-extern void process_context_switch(struct Context* current, struct Context* next);
-
-void scheduler_init(void) {
-    // Inisialisasi semua entri dalam daftar proses menjadi tidak aktif
-    for (int i = 0; i < PROCESS_COUNT_MAX; i++) {
-        process_manager_state.process_list[i].metadata.state = NEW;
-    }
-    // Atur jumlah proses aktif menjadi 0
-    process_manager_state.active_process_count = 0;
-}
-
-void scheduler_switch_to_next_process(void) {
-    struct ProcessControlBlock* current_pcb = process_get_current_running_pcb_pointer();
-    struct ProcessControlBlock* next_pcb = NULL;
-
-    if (current_pcb) {
-        // Save the current process context
-        current_pcb->metadata.state = READY;
-    }
-
-    // Select the next process to run (Round Robin)
-    int next_index = -1;
-    for (int i = 0; i < PROCESS_COUNT_MAX; i++) {
-        if (process_manager_state.process_list[i].metadata.state == READY) {
-            next_index = i;
-            break;
-        }
-    }
-
-    if (next_index != -1) {
-        next_pcb = &(process_manager_state.process_list[next_index]);
-        next_pcb->metadata.state = RUNNING;
-    } else {
-        // No READY process found, fallback to idle or panic
-        // For simplicity, we assume there is always at least one READY process
-        return;
-    }
-
-    if (current_pcb) {
-        process_context_switch(&(current_pcb->context), &(next_pcb->context));
-    } else {
-        process_context_switch(NULL, &(next_pcb->context));
-    }
-}
-
 struct ProcessManagerState process_manager_state = {
     .process_list = {0},
     .active_process_count = 0,
@@ -121,6 +76,21 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
 
     // Initialize process context
     struct CPURegister new_register_state = {
+    // __asm__ volatile("mov %%edi, %0" : "=r"(new_register_state.index.edi): /* <Empty> */);
+    // __asm__ volatile("mov %%esi, %0" : "=r"(new_register_state.index.esi): /* <Empty> */);
+
+    // __asm__ volatile("mov %%ebp, %0" : "=r"(new_register_state.stack.ebp): /* <Empty> */);
+    // __asm__ volatile("mov %%esp, %0" : "=r"(new_register_state.stack.esp): /* <Empty> */);
+
+    // __asm__ volatile("mov %%eax, %0" : "=r"(new_register_state.general.eax): /* <Empty> */);
+    // __asm__ volatile("mov %%ebx, %0" : "=r"(new_register_state.general.ebx): /* <Empty> */);
+    // __asm__ volatile("mov %%ecx, %0" : "=r"(new_register_state.general.ecx): /* <Empty> */);
+    // __asm__ volatile("mov %%edx, %0" : "=r"(new_register_state.general.edx): /* <Empty> */);
+
+    // __asm__ volatile("mov %%gs, %0" : "=r"(new_register_state.segment.gs): /* <Empty> */);
+    // __asm__ volatile("mov %%fs, %0" : "=r"(new_register_state.segment.fs): /* <Empty> */);
+    // __asm__ volatile("mov %%es, %0" : "=r"(new_register_state.segment.es): /* <Empty> */);
+    // __asm__ volatile("mov %%ds, %0" : "=r"(new_register_state.segment.ds): /* <Empty> */);
         .index = {0},
         .stack = {
             .ebp = 0xBFFFFFFC,
@@ -128,9 +98,9 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
         },
         .general = {0},
         .segment = {
-            .gs = 0,
-            .fs = 0,
-            .es = 0,
+            .gs = 0x3 | (0x4 << 3),
+            .fs = 0x3 | (0x4 << 3),
+            .es = 0x3 | (0x4 << 3),
             .ds = 0x3 | (0x4 << 3)
         }
     };

@@ -12,6 +12,7 @@
 #include "header/stdlib/string.h"
 #include "header/memory/paging.h"
 #include "header/process/process.h"
+#include "header/scheduler/scheduler.h"
 
 
 void kernel_setup(void) {
@@ -39,5 +40,6 @@ void kernel_setup(void) {
 
     // Create init process and execute it
     process_create_user_process(request);
-    scheduler_init();
+    // scheduler_init();
+    scheduler_switch_to_next_process();
 }
