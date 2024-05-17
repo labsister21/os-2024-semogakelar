@@ -91,7 +91,9 @@ void keyboard_isr(void) {
             // }
         } else if (ascii_char == '\t') {
             for (int i = 0; i < 2; i++) {
-                framebuffer_write(row_now,col_now,' ', 0xF, 0x00);
+                keyboard_driver_state.buffer_index++;
+                keyboard_driver_state.keyboard_buffer[keyboard_driver_state.buffer_index] = ' ';
+                framebuffer_write(row_now,col_now,' ', 0x0, 0x0);
                 col_now++;
             }
         } else if (ascii_char != 0 && keyboard_driver_state.buffer_index < KEYBOARD_BUFFER_SIZE - 1)  {
