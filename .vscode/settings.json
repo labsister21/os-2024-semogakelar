@@ -3,6 +3,11 @@
   "files.associations": {
     "string.h": "c",
     "process.h": "c",
-    "paging.h": "c"
+    "paging.h": "c",
+    "user-shell.h": "c",
+    "cp.h": "c",
+    "keyboard.h": "c",
+    "interrupt.h": "c",
+    "cmos.h": "c"
   }
 }

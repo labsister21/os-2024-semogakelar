@@ -22,12 +22,12 @@ void scheduler_switch_to_next_process(void) {
         counter++;
     }
 
-    // If there are no other processes waiting to be run
+    // If there are no other processes waiting to be run, continue current process
     if (next_index == process_manager_state.running_process_idx) {
         process_manager_state.process_list[process_manager_state.running_process_idx].metadata.state = RUNNING;
         return;
     }
-    // If there are no processes at all
+    // If there are no ready processes at all
     else if (counter == PROCESS_COUNT_MAX) {
         return;
     }

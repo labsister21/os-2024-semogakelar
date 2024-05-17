@@ -8,6 +8,7 @@
 #include "header/stdlib/string.h"
 #include "header/driver/keyboard.h"
 #include "header/scheduler/scheduler.h"
+#include "header/cmos/cmos.h"
 
 #define PIT_MAX_FREQUENCY   1193182
 #define PIT_TIMER_FREQUENCY 1000
@@ -85,7 +86,8 @@ void set_tss_kernel_current_stack(void) {
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
 }
 
-void syscall(struct InterruptFrame frame) {
+void interrupt(struct InterruptFrame frame) {
+    int8_t ret_val = 0;
     switch (frame.cpu.general.eax) {
         case 0:
             *((int8_t*) frame.cpu.general.ecx) = read(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
@@ -130,6 +132,33 @@ void syscall(struct InterruptFrame frame) {
         case 10:
             write_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
             break;
+        case 11:
+            terminate_current_process();
+            break;
+        case 12:
+            ret_val = process_create_user_process(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            *(int8_t*) frame.cpu.general.ecx = ret_val;
+            break;
+        case 13:
+            print_active_processes();
+            break;
+        case 14:
+            ret_val = kill_process((uint32_t) frame.cpu.general.ebx);
+            *(int8_t*) frame.cpu.general.ecx = ret_val;
+            break;
+        case 15:
+            read_rtc();            
+            puts(" ", 1, 0b1111);
+            char* current_hour = itoa((((int) hour) + 7) % 24, 10);
+            puts(current_hour, strlen(current_hour), 0b1111);
+            puts(":", 1, 0b1111);
+            char* current_minute = itoa(((int) minute), 10);
+            puts(current_minute, strlen(current_minute), 0b1111);
+            puts(":", 1, 0b1111);
+            char* current_second = itoa((int) second, 10);
+            puts(current_second, strlen(current_second), 0b1111);
+            puts("\n", 1, 0b1111);
+            break;
     }
 }
 
@@ -152,7 +181,7 @@ void main_interrupt_handler(struct InterruptFrame frame) {
             pic_ack(IRQ_TIMER);
             break;
         case 0x30:
-            syscall(frame);
+            interrupt(frame);
             break;
     }
 }

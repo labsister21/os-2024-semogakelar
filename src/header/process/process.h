@@ -57,7 +57,7 @@ struct Context {
     // TODO: Add important field here
     struct CPURegister cpu;
     uint32_t eip;
-    uint16_t eflags;
+    uint32_t eflags;
     struct PageDirectory* page_directory_virtual_addr;
 };
 
@@ -133,5 +133,14 @@ void scheduler_init(void);
 void scheduler_switch_to_next_process(void);
 
 uint32_t ceil_div(uint32_t a, uint32_t b);
+
+// Terminate current process & switch to other ready processes (if exists)
+void terminate_current_process();
+
+// Prints currently active processes
+void print_active_processes();
+
+// Kill a process by its pid
+int8_t kill_process(uint32_t pid);
 
 #endif

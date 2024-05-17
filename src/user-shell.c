@@ -9,6 +9,7 @@
 #include "header/shell/rm.h"
 #include "header/shell/find.h"
 #include "header/shell/mv.h"
+#include "header/shell/exec.h"
 
 uint32_t current_directory = ROOT_CLUSTER_NUMBER;
 char current_path[512];
@@ -22,6 +23,51 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     // Note : gcc usually use %eax as intermediate register,
     //        so it need to be the last one to mov
     __asm__ volatile("int $0x30");
+}
+
+void ps(int args_count) {
+    switch (args_count) {
+        case 0:
+            syscall(13, 0, 0, 0);
+            break;
+        default:
+            put("error: too many arguments, expected 0 argument\n", LIGHT_RED);
+            put("Usage: ps\n", LIGHT_GREY);
+            break;
+    }
+}
+
+void kill(char args[][512], int args_count) {
+    switch (args_count) {
+        case 0:
+            put("error: missing argument\n", LIGHT_RED);
+            put("Usage: kill <active_process_pid>\n", LIGHT_GREY);
+            break;
+        case 1:
+            if (strlen(args[0]) > 2 || !(args[0][0] > '0' && args[0][0] <= '9') || (strlen(args[0]) == 2 && !(args[0][1] > '0' && args[0][1] <= '9'))) {
+                put("error: invalid argument\n", LIGHT_RED);
+                put("Usage: kill <active_process_pid>\n", LIGHT_GREY);
+                return;
+            }
+
+            int8_t pid = args[0][0] - '0';
+            if (strlen(args[0]) > 2) {
+                pid *= 10;
+                pid += args[0][1] - '0';
+            }
+
+            int8_t ret_val = 0;
+            syscall(14, pid, (uint32_t) &ret_val, 0);
+            if (ret_val != 0) {
+                put("error: no such active process with that pid\n", LIGHT_RED);
+                return;
+            }
+            break;
+        default:
+            put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
+            put("Usage: kill <active_process_pid>\n", LIGHT_GREY);
+            break;
+    }
 }
 
 void put(char* str, uint8_t color) {
@@ -191,6 +237,18 @@ int main(void) {
         }
         else if (strlen(cmd) == 2 && memcmp(cmd, "mv", 2) == 0) {
             mv(args, args_count);
+        }
+        else if (strlen(cmd) == 4 && memcmp(cmd, "exec", 2) == 0) {
+            exec(args, args_count);
+        }
+        else if (strlen(cmd) == 2 && memcmp(cmd, "ps", 2) == 0) {
+            ps(args_count);
+        }
+        else if (strlen(cmd) == 4 && memcmp(cmd, "kill", 2) == 0) {
+            kill(args, args_count);
+        }
+        else if (strlen(cmd) == 5 && memcmp(cmd, "clock", 2) == 0) {
+            syscall(15, 0, 0, 0);
         }
         else if (!(cmd[0] == '\0')) {
             put("error: no such command with the name '", LIGHT_RED);

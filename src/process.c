@@ -2,6 +2,8 @@
 #include "header/memory/paging.h"
 #include "header/stdlib/string.h"
 #include "header/cpu/gdt.h"
+#include "header/driver/keyboard.h"
+#include "header/shell/cp.h"
 
 struct ProcessManagerState process_manager_state = {
     .process_list = {0},
@@ -149,4 +151,45 @@ uint32_t ceil_div(uint32_t a, uint32_t b) {
     }
 
     return result;
+}
+
+void terminate_current_process() {
+    struct ProcessControlBlock* current_pcb = process_get_current_running_pcb_pointer();
+    memset(current_pcb, 0, sizeof(struct ProcessControlBlock));
+    scheduler_switch_to_next_process();
+}
+
+void print_active_processes() {
+    char* str = "Currently running processes:\n";
+    puts(str, strlen(str), 0b0111);
+    for (int i = 0; i < PROCESS_COUNT_MAX; i++) {
+        if (process_manager_state.process_list[i].metadata.state == RUNNING || process_manager_state.process_list[i].metadata.state == READY) {
+            puts("PID: ", strlen("PID: "), 0b0111);
+            char* pid = itoa(process_manager_state.process_list[i].metadata.pid, 10);
+            puts(pid, strlen(pid), 0b1111);
+            puts("     Name: ", strlen("     Name: "), 0b0111);
+            puts(process_manager_state.process_list[i].metadata.process_name, strlen(process_manager_state.process_list[i].metadata.process_name), 0b1111);
+            puts("\n", strlen("\n"), 0b1111);
+        }
+    }
+}
+
+int8_t kill_process(uint32_t pid) {
+    if (process_manager_state.process_list[process_manager_state.running_process_idx].metadata.pid == pid) {
+        terminate_current_process();
+        return 0;
+    }
+    
+    int i = 0;
+    while (i < PROCESS_COUNT_MAX && process_manager_state.process_list[i].metadata.pid != pid) {
+        i++;
+    }
+
+    if (i == PROCESS_COUNT_MAX) {
+        return -1;
+    }
+
+    memset(&(process_manager_state.process_list[i]), 0, sizeof(struct ProcessControlBlock));
+    
+    return 0;
 }
