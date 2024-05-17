@@ -57,7 +57,7 @@ struct Context {
     // TODO: Add important field here
     struct CPURegister cpu;
     uint32_t eip;
-    uint8_t eflags;
+    uint16_t eflags;
     struct PageDirectory* page_directory_virtual_addr;
 };
 
@@ -80,7 +80,7 @@ typedef enum PROCESS_STATE {
 struct ProcessControlBlock {
     struct {
         uint32_t pid;
-        char* process_name;
+        char process_name[8];
         PROCESS_STATE state;
     } metadata;
     struct Context context;
@@ -93,6 +93,7 @@ struct ProcessControlBlock {
 
 struct ProcessManagerState {
     struct ProcessControlBlock process_list[PROCESS_COUNT_MAX];
+    int running_process_idx;
     int active_process_count;
 };
 

@@ -7,6 +7,7 @@
 #include "header/driver/framebuffer.h"
 #include "header/stdlib/string.h"
 #include "header/driver/keyboard.h"
+#include "header/scheduler/scheduler.h"
 
 #define PIT_MAX_FREQUENCY   1193182
 #define PIT_TIMER_FREQUENCY 1000
@@ -139,6 +140,16 @@ void main_interrupt_handler(struct InterruptFrame frame) {
             break;        
         case IRQ_KEYBOARD + PIC1_OFFSET:
             keyboard_isr();
+            break;
+        case IRQ_TIMER + PIC1_OFFSET:
+            struct Context current_ctx = {
+                .cpu = frame.cpu,
+                .eflags = frame.int_stack.eflags,
+                .eip = frame.int_stack.eip
+            };
+            scheduler_save_context_to_current_running_pcb(current_ctx);
+            scheduler_switch_to_next_process();
+            pic_ack(IRQ_TIMER);
             break;
         case 0x30:
             syscall(frame);

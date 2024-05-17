@@ -176,4 +176,7 @@ void set_tss_kernel_current_stack(void);
 // System call
 void syscall(struct InterruptFrame frame);
 
+// Activate timer interrupt for kernel to periodically make an interrupt
+void activate_timer_interrupt(void);
+
 #endif

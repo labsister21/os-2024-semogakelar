@@ -125,32 +125,30 @@ set_tss_register:
     ret
 
 process_context_switch:
-    ; Save base address of function argument (ctx)
-    
-    lea ecx, [esp + 4]         ; ctx is the first argument, contains pointer to current context
+    mov  eax, 0x20 | 0x3
+    mov  ds, ax
+    mov  es, ax
+    mov  fs, ax
+    mov  gs, ax
 
-    mov eax, [eax + CPU_SEGMENT_DS_OFFSET]
+    ; Save base address of function argument (ctx)
+    lea ecx, [esp+4]         ; ctx is the first argument, contains pointer to current context
     push eax
-    mov eax, ecx
+    mov eax, [ecx + CPU_STACK_ESP_OFFSET]
     push eax
-    mov eax, [eax + CONTEXT_EFLAGS_OFFSET]
+    mov eax, [ecx + CONTEXT_EFLAGS_OFFSET]
     push eax
     mov  eax, 0x18 | 0x3
     push eax ; Code segment selector (GDT_USER_CODE_SELECTOR), user privilege
-    mov eax, [eax + CONTEXT_EIP_OFFSET]
+    mov eax, [ecx + CONTEXT_EIP_OFFSET]
     push eax
 
     mov edi, [ecx + CPU_INDEX_EDI_OFFSET]    ; Restore edi
     mov esi, [ecx + CPU_INDEX_ESI_OFFSET]    ; Restore esi
     mov ebp, [ecx + CPU_STACK_EBP_OFFSET]    ; Restore ebp
-    mov esp, [ecx + CPU_STACK_ESP_OFFSET]    ; Restore esp
     mov ebx, [ecx + CPU_GENERAL_EBX_OFFSET]  ; Restore ebx
     mov edx, [ecx + CPU_GENERAL_EDX_OFFSET]  ; Restore edx
     mov eax, [ecx + CPU_GENERAL_EAX_OFFSET]  ; Restore eax
-    mov gs, [ecx + CPU_SEGMENT_GS_OFFSET]    ; Restore gs
-    mov fs, [ecx + CPU_SEGMENT_FS_OFFSET]    ; Restore fs
-    mov es, [ecx + CPU_SEGMENT_ES_OFFSET]    ; Restore es
-    mov ds, [ecx + CPU_SEGMENT_DS_OFFSET]    ; Restore ds
     mov ecx, [ecx + CPU_GENERAL_ECX_OFFSET]  ; Restore ecx
 
     iret

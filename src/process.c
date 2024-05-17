@@ -6,16 +6,14 @@
 struct ProcessManagerState process_manager_state = {
     .process_list = {0},
     .active_process_count = 0,
+    .running_process_idx = -1
 };
 
 struct ProcessControlBlock* process_get_current_running_pcb_pointer(void) {
-    int i = 0;
-    while (i < PROCESS_COUNT_MAX && process_manager_state.process_list[i].metadata.state != RUNNING) {
-        i++;
-    }
-
-    if (i == PROCESS_COUNT_MAX) return NULL;
-    return &(process_manager_state.process_list[i]);
+    if (process_manager_state.running_process_idx == -1)
+        return NULL;
+    
+    return &(process_manager_state.process_list[process_manager_state.running_process_idx]);
 }
 
 int32_t process_create_user_process(struct FAT32DriverRequest request) {
@@ -67,6 +65,7 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
         goto exit_cleanup;
     }
 
+    memcpy(new_pcb->metadata.process_name, request.name, 8);
     for (uint32_t i = 0; i < new_pcb->memory.page_frame_used_count; i++) {
         memcpy(new_pcb->memory.virtual_addr_used[i], request.buf + (i * PAGE_FRAME_SIZE), PAGE_FRAME_SIZE);
     }
@@ -76,25 +75,10 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
 
     // Initialize process context
     struct CPURegister new_register_state = {
-    // __asm__ volatile("mov %%edi, %0" : "=r"(new_register_state.index.edi): /* <Empty> */);
-    // __asm__ volatile("mov %%esi, %0" : "=r"(new_register_state.index.esi): /* <Empty> */);
-
-    // __asm__ volatile("mov %%ebp, %0" : "=r"(new_register_state.stack.ebp): /* <Empty> */);
-    // __asm__ volatile("mov %%esp, %0" : "=r"(new_register_state.stack.esp): /* <Empty> */);
-
-    // __asm__ volatile("mov %%eax, %0" : "=r"(new_register_state.general.eax): /* <Empty> */);
-    // __asm__ volatile("mov %%ebx, %0" : "=r"(new_register_state.general.ebx): /* <Empty> */);
-    // __asm__ volatile("mov %%ecx, %0" : "=r"(new_register_state.general.ecx): /* <Empty> */);
-    // __asm__ volatile("mov %%edx, %0" : "=r"(new_register_state.general.edx): /* <Empty> */);
-
-    // __asm__ volatile("mov %%gs, %0" : "=r"(new_register_state.segment.gs): /* <Empty> */);
-    // __asm__ volatile("mov %%fs, %0" : "=r"(new_register_state.segment.fs): /* <Empty> */);
-    // __asm__ volatile("mov %%es, %0" : "=r"(new_register_state.segment.es): /* <Empty> */);
-    // __asm__ volatile("mov %%ds, %0" : "=r"(new_register_state.segment.ds): /* <Empty> */);
         .index = {0},
         .stack = {
-            .ebp = 0xBFFFFFFC,
-            .esp = 0xBFFFFFFC
+            .ebp = 0x400000 - 4,
+            .esp = 0x400000 - 4
         },
         .general = {0},
         .segment = {
@@ -107,7 +91,7 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
     
     memcpy(&(new_pcb->context.cpu), &new_register_state, sizeof(struct CPURegister));
     new_pcb->context.eip = 0;
-    new_pcb->context.eflags = (uint8_t) CPU_EFLAGS_FLAG_INTERRUPT_ENABLE | CPU_EFLAGS_BASE_FLAG;
+    new_pcb->context.eflags = (uint16_t) CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
     new_pcb->context.page_directory_virtual_addr = new_page;
 
     // Initialize process metadata
