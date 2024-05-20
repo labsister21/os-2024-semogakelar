@@ -74,6 +74,28 @@ void put(char* str, uint8_t color) {
     syscall(6, (uint32_t) str, strlen(str), color);
 }
 
+void get_input(char* buf) {
+    int idx = 0;
+    while (true) {
+        syscall(4, (uint32_t) &buf[idx], 0, 0);
+        if (buf[idx] == '\b' && idx > 0) {
+            idx--;
+            buf[idx] = '\0';
+        }
+        else if (buf[idx] == '\n') {
+            buf[idx] = '\0';
+            break;
+        }
+        else if (buf[idx] == '\t') {
+            buf[idx] = ' '; idx++;
+            buf[idx] = ' '; idx++;
+        }
+        else if (buf[idx] != '\0') {
+            idx++;
+        }
+    }
+}
+
 void print_path(char path[][512], uint32_t idx, uint8_t color) {
     if (path[0][0] != '\0')
         put(path[0], color);
@@ -212,7 +234,8 @@ int main(void) {
         put(current_path, LIGHT_BLUE);
         put("$ ", DARK_GREY);
 
-        syscall(4, (uint32_t) buf_input, 2048, 0);
+        syscall(7, 0, 0, 0);
+        get_input(buf_input);
         
         int8_t ret_val = parse_input(buf_input, cmd, args, &args_count);
         if (ret_val != 0) {

@@ -16,7 +16,6 @@ int main() {
     syscall(6, (uint32_t) str, strlen(str), 0b1111);
     while (true) {
         syscall(15, 0, 0, 0);
-        syscall(16, 0, 0, 0);
     }
 
     return 0;

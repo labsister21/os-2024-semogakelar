@@ -156,7 +156,7 @@ struct PageDirectory* paging_create_new_page_directory(void) {
         .flag.use_pagesize_4_mb = 1,
         .lower_address = 0
     };
-    memcpy(&(page_directory_list[i].table[0x300]), &kernel_higher_half, sizeof(struct PageDirectory));
+    memcpy(&(page_directory_list[i].table[0x300]), &kernel_higher_half, sizeof(struct PageDirectoryEntry));
     return &page_directory_list[i];
 }
 

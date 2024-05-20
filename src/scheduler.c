@@ -36,7 +36,11 @@ void scheduler_switch_to_next_process(void) {
     next_pcb = &(process_manager_state.process_list[next_index]);
     next_pcb->metadata.state = RUNNING;
     process_manager_state.running_process_idx = next_index;
+    // if (next_pcb->context.eip > KERNEL_VIRTUAL_ADDRESS_BASE) {
+    //     paging_use_page_directory(&_paging_kernel_page_directory);
+    // } else {
     paging_use_page_directory(next_pcb->context.page_directory_virtual_addr);
+    // }
     process_context_switch(next_pcb->context);
 }
 

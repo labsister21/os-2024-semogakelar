@@ -102,15 +102,14 @@ void interrupt(struct InterruptFrame frame) {
             *((int8_t*) frame.cpu.general.ecx) = Delete(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
             break;
         case 4:
-            keyboard_state_activate();
-            while (is_keyboard_blocking()) {
-                __asm__ volatile("cli");
-                pic_ack(IRQ_TIMER);
-                __asm__("sti");
-            }
-            char buf[KEYBOARD_BUFFER_SIZE];
-            get_keyboard_buffer(buf);
-            memcpy((char*) frame.cpu.general.ebx, buf, frame.cpu.general.ecx);
+            // while (is_keyboard_blocking()) {
+            //     __asm__ volatile("cli");
+            //     pic_ack(IRQ_TIMER);
+            //     __asm__("sti");
+            // }
+            // char buf[KEYBOARD_BUFFER_SIZE] = {0};
+            get_keyboard_buffer((char*) frame.cpu.general.ebx);
+            // memcpy((char*) frame.cpu.general.ebx, buf, frame.cpu.general.ecx);
             break;
         case 5:
             putchar(*((char*)frame.cpu.general.ebx), frame.cpu.general.ecx);
@@ -153,8 +152,11 @@ void interrupt(struct InterruptFrame frame) {
             print_current_time();
             break;
         case 16:
-            pic_ack(IRQ_TIMER);
+            keyboard_state_activate();
             break;
+        case 17:
+            framebuffer_write(frame.cpu.general.ecx, frame.cpu.general.edx, frame.cpu.general.ebx, 0xF, 0x0);
+            break;  
     }
 }
 
@@ -174,8 +176,8 @@ void main_interrupt_handler(struct InterruptFrame frame) {
                 .page_directory_virtual_addr = paging_get_current_page_directory_addr()
             };
             scheduler_save_context_to_current_running_pcb(current_ctx);
-            scheduler_switch_to_next_process();
             pic_ack(IRQ_TIMER);
+            scheduler_switch_to_next_process();
             break;
         case 0x30:
             interrupt(frame);

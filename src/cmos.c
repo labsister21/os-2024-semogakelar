@@ -107,19 +107,34 @@ char* get_current_time() {
 
 void print_current_time() {
     read_rtc();
-    char* current_hour = itoa((int) hour, 10);
-    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 8, (current_hour[0] == 0)? '0' : current_hour[0], 0b1111, 0);
-    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 7, (current_hour[1] == 0)? '0' : current_hour[1], 0b1111, 0);
+    char* current_hour = itoa((((int) hour) + 7) % 24, 10);
+    if (strlen(current_hour) == 1){
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 8, '0', 0b1111, 0);
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 7, current_hour[0], 0b1111, 0);
+    } else {
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 8, (current_hour[0] == 0)? '0' : current_hour[0], 0b1111, 0);
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 7, (current_hour[1] == 0)? '0' : current_hour[1], 0b1111, 0);
+    }
 
     framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 6, ':', 0b1111, 0);
 
     char* current_minute = itoa(((int) minute), 10);
-    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 5, (current_minute[0] == 0)? '0' : current_minute[0], 0b1111, 0);
-    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 4, (current_minute[1] == 0)? '0' : current_minute[1], 0b1111, 0);
+    if (strlen(current_minute) == 1){
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 5, '0', 0b1111, 0);
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 4, current_minute[0], 0b1111, 0);
+    } else {
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 5, (current_minute[0] == 0)? '0' : current_minute[0], 0b1111, 0);
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 4, (current_minute[1] == 0)? '0' : current_minute[1], 0b1111, 0);
+    }
 
     framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 3, ':', 0b1111, 0);
 
     char* current_second = itoa(((int) second), 10);
-    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 2, (current_second[0] == 0)? '0' : current_second[0], 0b1111, 0);
-    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 1, (current_second[1] == 0)? '0' : current_second[1], 0b1111, 0);
+    if (strlen(current_second) == 1){
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 2, '0', 0b1111, 0);
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 1, current_second[0], 0b1111, 0);
+    } else {
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 2, (current_second[0] == 0)? '0' : current_second[0], 0b1111, 0);
+      framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 1, (current_second[1] == 0)? '0' : current_second[1], 0b1111, 0);
+    }
 }

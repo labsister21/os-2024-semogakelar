@@ -8,6 +8,8 @@
     "cp.h": "c",
     "keyboard.h": "c",
     "interrupt.h": "c",
-    "cmos.h": "c"
+    "cmos.h": "c",
+    "framebuffer.h": "c",
+    "portio.h": "c"
   }
 }
