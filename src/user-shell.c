@@ -78,9 +78,12 @@ void get_input(char* buf) {
     int idx = 0;
     while (true) {
         syscall(4, (uint32_t) &buf[idx], 0, 0);
-        if (buf[idx] == '\b' && idx > 0) {
-            idx--;
+        if (buf[idx] == '\b') {
             buf[idx] = '\0';
+            if (idx > 0) {
+                idx--;
+                buf[idx] = '\0';
+            }
         }
         else if (buf[idx] == '\n') {
             buf[idx] = '\0';

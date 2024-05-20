@@ -154,6 +154,10 @@ void move(char args0[], char args1[]) {
 }
 
 void rename(char path[], char newName[]) {
+    if (contains_invalid_char(newName, '.')) {
+        put("error: new filename must not contain '.'\n", LIGHT_RED);
+        return;
+    }
     uint32_t num_of_directory;
     char listPath[512][512] = {0};
     parse_path(path, listPath, &num_of_directory);
