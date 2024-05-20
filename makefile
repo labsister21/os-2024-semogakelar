@@ -22,7 +22,7 @@ disk:
 run: all
 	qemu-system-i386 -s -S -drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 all: build
-build: disk insert-shell insert-files iso
+build: disk insert-shell insert-clock insert-files iso
 clean:
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
 kernel:
@@ -111,9 +111,30 @@ user-shell:
 	@echo Linking object shell object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/shell
 	@rm -f *.o
+clock:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/crt0.s -o crt0.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/clock.c -o clock.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/string.c -o string.o
+	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 --oformat=binary \
+		crt0.o \
+		clock.o \
+		string.o \
+		-o $(OUTPUT_FOLDER)/clock
+	@echo Linking object clock object files and generate flat binary...
+	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 --oformat=elf32-i386 \
+		crt0.o \
+		clock.o \
+		string.o \
+		-o $(OUTPUT_FOLDER)/clock_elf
+	@echo Linking object clock object files and generate ELF32 for debugging...
+	@size --target=binary $(OUTPUT_FOLDER)/clock
+	@rm -f *.o
 insert-shell: inserter user-shell
 	@echo Inserting shell into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter shell 2 $(DISK_NAME).bin
+insert-clock: clock
+	@echo Inserting clock into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter clock 2 $(DISK_NAME).bin
 insert-files: inserter user-shell
 	@echo Inserting additional files into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter ngevvibu.txt 2 $(DISK_NAME).bin

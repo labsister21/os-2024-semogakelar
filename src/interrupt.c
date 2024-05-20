@@ -103,8 +103,11 @@ void interrupt(struct InterruptFrame frame) {
             break;
         case 4:
             keyboard_state_activate();
-            __asm__("sti");
-            while (is_keyboard_blocking());
+            while (is_keyboard_blocking()) {
+                __asm__ volatile("cli");
+                pic_ack(IRQ_TIMER);
+                __asm__("sti");
+            }
             char buf[KEYBOARD_BUFFER_SIZE];
             get_keyboard_buffer(buf);
             memcpy((char*) frame.cpu.general.ebx, buf, frame.cpu.general.ecx);
@@ -147,17 +150,10 @@ void interrupt(struct InterruptFrame frame) {
             *(int8_t*) frame.cpu.general.ecx = ret_val;
             break;
         case 15:
-            read_rtc();            
-            puts(" ", 1, 0b1111);
-            char* current_hour = itoa((((int) hour) + 7) % 24, 10);
-            puts(current_hour, strlen(current_hour), 0b1111);
-            puts(":", 1, 0b1111);
-            char* current_minute = itoa(((int) minute), 10);
-            puts(current_minute, strlen(current_minute), 0b1111);
-            puts(":", 1, 0b1111);
-            char* current_second = itoa((int) second, 10);
-            puts(current_second, strlen(current_second), 0b1111);
-            puts("\n", 1, 0b1111);
+            print_current_time();
+            break;
+        case 16:
+            pic_ack(IRQ_TIMER);
             break;
     }
 }
@@ -174,7 +170,8 @@ void main_interrupt_handler(struct InterruptFrame frame) {
             struct Context current_ctx = {
                 .cpu = frame.cpu,
                 .eflags = frame.int_stack.eflags,
-                .eip = frame.int_stack.eip
+                .eip = frame.int_stack.eip,
+                .page_directory_virtual_addr = paging_get_current_page_directory_addr()
             };
             scheduler_save_context_to_current_running_pcb(current_ctx);
             scheduler_switch_to_next_process();

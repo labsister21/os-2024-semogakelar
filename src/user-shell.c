@@ -184,7 +184,7 @@ int main(void) {
     memset((void*) &current_dir_table, 0, sizeof(struct FAT32DirectoryTable));
     update_directory_table(&current_dir_table, ROOT_CLUSTER_NUMBER);
 
-    current_path[0] = '~';
+    current_path[0] = '/';
     for (int i = 1; i < 512; i++)
         current_path[i] = '\0';
 
@@ -247,7 +247,7 @@ int main(void) {
         else if (strlen(cmd) == 4 && memcmp(cmd, "kill", 2) == 0) {
             kill(args, args_count);
         }
-        else if (strlen(cmd) == 5 && memcmp(cmd, "clock", 2) == 0) {
+        else if (strlen(cmd) == 5 && memcmp(cmd, "clock", 5) == 0) {
             syscall(15, 0, 0, 0);
         }
         else if (!(cmd[0] == '\0')) {

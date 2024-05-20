@@ -1,5 +1,6 @@
 #include "header/cmos/cmos.h"
 #include "header/stdlib/string.h"
+#include "header/driver/framebuffer.h"
 
 int century_register = 0x00;
 unsigned char second;
@@ -102,4 +103,23 @@ void read_rtc() {
 // Returns a string containing current time, eg. "22/08/2024 13:23:59"
 char* get_current_time() {
     return NULL;
+}
+
+void print_current_time() {
+    read_rtc();
+    char* current_hour = itoa((int) hour, 10);
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 8, (current_hour[0] == 0)? '0' : current_hour[0], 0b1111, 0);
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 7, (current_hour[1] == 0)? '0' : current_hour[1], 0b1111, 0);
+
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 6, ':', 0b1111, 0);
+
+    char* current_minute = itoa(((int) minute), 10);
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 5, (current_minute[0] == 0)? '0' : current_minute[0], 0b1111, 0);
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 4, (current_minute[1] == 0)? '0' : current_minute[1], 0b1111, 0);
+
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 3, ':', 0b1111, 0);
+
+    char* current_second = itoa(((int) second), 10);
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 2, (current_second[0] == 0)? '0' : current_second[0], 0b1111, 0);
+    framebuffer_write(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 1, (current_second[1] == 0)? '0' : current_second[1], 0b1111, 0);
 }

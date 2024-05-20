@@ -61,9 +61,16 @@ void execute_program(char file_path[][512], uint32_t num_of_directory) {
                     put(".", LIGHT_RED);
                     put(ext, LIGHT_RED);
                 }
-                put("' in '", LIGHT_RED);
-                print_path(file_path, num_of_directory-2, LIGHT_RED);
-                put("'\n", LIGHT_RED);
+                put("' in ", LIGHT_RED);
+                if (num_of_directory > 2) {
+                    put("'", LIGHT_RED);
+                    print_path(file_path, num_of_directory-2, LIGHT_RED);
+                    put("'", LIGHT_RED);
+                } else {
+                    put("current directory", LIGHT_RED);
+                }
+                
+                put("\n", LIGHT_RED);
                 break;
         }
     }

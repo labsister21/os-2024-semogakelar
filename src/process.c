@@ -49,6 +49,8 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
         goto exit_cleanup;
     }
 
+    // if ()
+
     for (uint32_t i = 0; i < page_frame_count_needed; i++) {
         void* virtual_addr = (void*) (i * PAGE_FRAME_SIZE);
         paging_allocate_user_page_frame(new_page, virtual_addr);
@@ -67,10 +69,13 @@ int32_t process_create_user_process(struct FAT32DriverRequest request) {
         goto exit_cleanup;
     }
 
+
+    // NTAR DIGANTI HEHE
     memcpy(new_pcb->metadata.process_name, request.name, 8);
-    for (uint32_t i = 0; i < new_pcb->memory.page_frame_used_count; i++) {
-        memcpy(new_pcb->memory.virtual_addr_used[i], request.buf + (i * PAGE_FRAME_SIZE), PAGE_FRAME_SIZE);
-    }
+    // for (uint32_t i = 0; i < new_pcb->memory.page_frame_used_count; i++) {
+    memcpy(new_pcb->memory.virtual_addr_used[0], request.buf, PAGE_FRAME_SIZE);
+    memset(new_pcb->memory.virtual_addr_used[1], 0, PAGE_FRAME_SIZE);
+    // }
 
     paging_use_page_directory(temp_page);
     
@@ -184,12 +189,10 @@ int8_t kill_process(uint32_t pid) {
     while (i < PROCESS_COUNT_MAX && process_manager_state.process_list[i].metadata.pid != pid) {
         i++;
     }
-
     if (i == PROCESS_COUNT_MAX) {
         return -1;
     }
 
     memset(&(process_manager_state.process_list[i]), 0, sizeof(struct ProcessControlBlock));
-    
     return 0;
 }

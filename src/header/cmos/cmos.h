@@ -21,4 +21,6 @@ unsigned char get_RTC_register(int reg);
 
 void read_rtc();
 
+void print_current_time();
+
 #endif

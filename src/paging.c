@@ -25,7 +25,7 @@ __attribute__((aligned(0x1000))) struct PageDirectory _paging_kernel_page_direct
 static struct PageManagerState page_manager_state = {
     .page_frame_map = {
         [0]                            = true,
-        [1 ... PAGE_FRAME_MAX_COUNT-1] = false
+        [1 ... PAGE_FRAME_MAX_COUNT-1] = false,
     },
     .free_page_frame_count = PAGE_FRAME_MAX_COUNT - 1
 };
@@ -150,17 +150,13 @@ struct PageDirectory* paging_create_new_page_directory(void) {
     if (i == PAGING_DIRECTORY_TABLE_MAX_COUNT) return NULL;
 
     page_directory_manager.page_directory_used[i] = true;
-    struct PageDirectory temp = {
-        .table = {
-            [0x300] = {
-                .flag.present_bit       = 1,
-                .flag.write_bit         = 1,
-                .flag.use_pagesize_4_mb = 1,
-                .lower_address          = 0,
-            }
-        }
+    struct PageDirectoryEntry kernel_higher_half = {
+        .flag.present_bit = 1,
+        .flag.write_bit = 1,
+        .flag.use_pagesize_4_mb = 1,
+        .lower_address = 0
     };
-    memcpy(&page_directory_list[i], &temp, sizeof(struct PageDirectory));
+    memcpy(&(page_directory_list[i].table[0x300]), &kernel_higher_half, sizeof(struct PageDirectory));
     return &page_directory_list[i];
 }
 
