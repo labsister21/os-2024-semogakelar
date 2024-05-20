@@ -103,7 +103,7 @@ void copy_word(char* str, char* dest, uint32_t* idx) {
 }
 
 void append_current_path(char* path) {
-    current_path[strlen(current_path)] = '/';
+    if (strlen(current_path) != 1) current_path[strlen(current_path)] = '/';
     int32_t current_path_len = strlen(current_path);
     for (size_t i = 0; i < strlen(path); i++) {
         current_path[i + current_path_len] = path[i];
@@ -122,22 +122,35 @@ void retract_current_path() {
 }
 
 void parse_path(char* str, char paths[][512], uint32_t* num_of_directory) {
-    uint8_t num_of_folder = 1;
+    // Handle absolute path
     uint32_t idx = 0;
+    if (str[0] == '/' || str[0] == '\\') {
+        update_directory_table(&current_dir_table, ROOT_CLUSTER_NUMBER);
+        current_directory = ROOT_CLUSTER_NUMBER;
+        memset(current_path, 0, 512);
+        current_path[0] = '/';
+        idx++;
+    }
+    
+    uint8_t num_of_folder = 1;
     while (str[idx] != '\0') {
-        if (str[idx] == '/' || str[idx] == '\\') {
+        if ((str[idx] == '/' || str[idx] == '\\') &&
+            (strlen(str) > idx+1 && (str[idx+1] != '\0' || str[idx+1] != ' '))) {
+            
             num_of_folder++;
         }
         idx++;
     }
     *num_of_directory = num_of_folder;
-    idx = 0;
+    idx = (str[0] == '/' || str[0] == '\\')? 1 : 0;
 
     uint32_t path_idx = 0, path_cnt = 0;
     while (str[idx] != '\0') {
         if (str[idx] == '/' || str[idx] == '\\') {
-            path_cnt++;
-            path_idx = 0;
+            if (strlen(str) > idx+1 && (str[idx+1] != '\0' || str[idx+1] != ' ')) {    
+                path_cnt++;
+                path_idx = 0;
+            }
         }
         else {
             paths[path_cnt][path_idx] = str[idx];
