@@ -3,11 +3,10 @@
 > Sistem operasi yang akan dibuat akan berjalan pada arsitektur x86 32-bit
 
 ## Daftar Isi
-- [Author](#author)
 - [Deskripsi Singkat](#deskripsi-singkat)
-- [Sistematika File](#sistematika-file)
 - [Requirements](#requirements)
 - [Cara Mengkompilasi dan Menjalankan Program](#cara-mengkompilasi-dan-menjalankan-program)
+- [Author](#author)
 
 ## Deskripsi Singkat
 Tugas Besar ini bertujuan membuat sistem operasi yang berjalan pada arsitektur x86 32-bit.<br>
