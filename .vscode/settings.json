@@ -1,17 +1,15 @@
 {
-  "debug.onTaskErrors": "debugAnyway",
+  "C_Cpp_Runner.msvcBatchPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvarsall.bat",
   "files.associations": {
-    "gdt.h": "c",
-    "fat32.h": "c",
-    "stdint.h": "c",
-    "stddef.h": "c",
-    "disk.h": "c",
-    "stdbool.h": "c",
+    "string.h": "c",
+    "process.h": "c",
+    "paging.h": "c",
     "user-shell.h": "c",
-    "clear.h": "c",
     "cp.h": "c",
-    "cd.h": "c",
-    "mv.h": "c"
-  },
-  "C_Cpp_Runner.msvcBatchPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvarsall.bat"
+    "keyboard.h": "c",
+    "interrupt.h": "c",
+    "cmos.h": "c",
+    "framebuffer.h": "c",
+    "portio.h": "c"
+  }
 }

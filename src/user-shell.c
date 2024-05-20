@@ -9,6 +9,7 @@
 #include "header/shell/rm.h"
 #include "header/shell/find.h"
 #include "header/shell/mv.h"
+#include "header/shell/exec.h"
 
 uint32_t current_directory = ROOT_CLUSTER_NUMBER;
 char current_path[512];
@@ -24,8 +25,75 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("int $0x30");
 }
 
+void ps(int args_count) {
+    switch (args_count) {
+        case 0:
+            syscall(13, 0, 0, 0);
+            break;
+        default:
+            put("error: too many arguments, expected 0 argument\n", LIGHT_RED);
+            put("Usage: ps\n", LIGHT_GREY);
+            break;
+    }
+}
+
+void kill(char args[][512], int args_count) {
+    switch (args_count) {
+        case 0:
+            put("error: missing argument\n", LIGHT_RED);
+            put("Usage: kill <active_process_pid>\n", LIGHT_GREY);
+            break;
+        case 1:
+            if (strlen(args[0]) > 2 || !(args[0][0] > '0' && args[0][0] <= '9') || (strlen(args[0]) == 2 && !(args[0][1] > '0' && args[0][1] <= '9'))) {
+                put("error: invalid argument\n", LIGHT_RED);
+                put("Usage: kill <active_process_pid>\n", LIGHT_GREY);
+                return;
+            }
+
+            int8_t pid = args[0][0] - '0';
+            if (strlen(args[0]) > 2) {
+                pid *= 10;
+                pid += args[0][1] - '0';
+            }
+
+            int8_t ret_val = 0;
+            syscall(14, pid, (uint32_t) &ret_val, 0);
+            if (ret_val != 0) {
+                put("error: no such active process with that pid\n", LIGHT_RED);
+                return;
+            }
+            break;
+        default:
+            put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
+            put("Usage: kill <active_process_pid>\n", LIGHT_GREY);
+            break;
+    }
+}
+
 void put(char* str, uint8_t color) {
     syscall(6, (uint32_t) str, strlen(str), color);
+}
+
+void get_input(char* buf) {
+    int idx = 0;
+    while (true) {
+        syscall(4, (uint32_t) &buf[idx], 0, 0);
+        if (buf[idx] == '\b' && idx > 0) {
+            idx--;
+            buf[idx] = '\0';
+        }
+        else if (buf[idx] == '\n') {
+            buf[idx] = '\0';
+            break;
+        }
+        else if (buf[idx] == '\t') {
+            buf[idx] = ' '; idx++;
+            buf[idx] = ' '; idx++;
+        }
+        else if (buf[idx] != '\0') {
+            idx++;
+        }
+    }
 }
 
 void print_path(char path[][512], uint32_t idx, uint8_t color) {
@@ -57,7 +125,7 @@ void copy_word(char* str, char* dest, uint32_t* idx) {
 }
 
 void append_current_path(char* path) {
-    current_path[strlen(current_path)] = '/';
+    if (strlen(current_path) != 1) current_path[strlen(current_path)] = '/';
     int32_t current_path_len = strlen(current_path);
     for (size_t i = 0; i < strlen(path); i++) {
         current_path[i + current_path_len] = path[i];
@@ -76,22 +144,35 @@ void retract_current_path() {
 }
 
 void parse_path(char* str, char paths[][512], uint32_t* num_of_directory) {
-    uint8_t num_of_folder = 1;
+    // Handle absolute path
     uint32_t idx = 0;
+    if (str[0] == '/' || str[0] == '\\') {
+        update_directory_table(&current_dir_table, ROOT_CLUSTER_NUMBER);
+        current_directory = ROOT_CLUSTER_NUMBER;
+        memset(current_path, 0, 512);
+        current_path[0] = '/';
+        idx++;
+    }
+    
+    uint8_t num_of_folder = 1;
     while (str[idx] != '\0') {
-        if (str[idx] == '/' || str[idx] == '\\') {
+        if ((str[idx] == '/' || str[idx] == '\\') &&
+            (strlen(str) > idx+1 && (str[idx+1] != '\0' || str[idx+1] != ' '))) {
+            
             num_of_folder++;
         }
         idx++;
     }
     *num_of_directory = num_of_folder;
-    idx = 0;
+    idx = (str[0] == '/' || str[0] == '\\')? 1 : 0;
 
     uint32_t path_idx = 0, path_cnt = 0;
     while (str[idx] != '\0') {
         if (str[idx] == '/' || str[idx] == '\\') {
-            path_cnt++;
-            path_idx = 0;
+            if (strlen(str) > idx+1 && (str[idx+1] != '\0' || str[idx+1] != ' ')) {    
+                path_cnt++;
+                path_idx = 0;
+            }
         }
         else {
             paths[path_cnt][path_idx] = str[idx];
@@ -138,7 +219,7 @@ int main(void) {
     memset((void*) &current_dir_table, 0, sizeof(struct FAT32DirectoryTable));
     update_directory_table(&current_dir_table, ROOT_CLUSTER_NUMBER);
 
-    current_path[0] = '~';
+    current_path[0] = '/';
     for (int i = 1; i < 512; i++)
         current_path[i] = '\0';
 
@@ -153,7 +234,8 @@ int main(void) {
         put(current_path, LIGHT_BLUE);
         put("$ ", DARK_GREY);
 
-        syscall(4, (uint32_t) buf_input, 2048, 0);
+        syscall(7, 0, 0, 0);
+        get_input(buf_input);
         
         int8_t ret_val = parse_input(buf_input, cmd, args, &args_count);
         if (ret_val != 0) {
@@ -191,6 +273,18 @@ int main(void) {
         }
         else if (strlen(cmd) == 2 && memcmp(cmd, "mv", 2) == 0) {
             mv(args, args_count);
+        }
+        else if (strlen(cmd) == 4 && memcmp(cmd, "exec", 2) == 0) {
+            exec(args, args_count);
+        }
+        else if (strlen(cmd) == 2 && memcmp(cmd, "ps", 2) == 0) {
+            ps(args_count);
+        }
+        else if (strlen(cmd) == 4 && memcmp(cmd, "kill", 2) == 0) {
+            kill(args, args_count);
+        }
+        else if (strlen(cmd) == 5 && memcmp(cmd, "clock", 5) == 0) {
+            syscall(15, 0, 0, 0);
         }
         else if (!(cmd[0] == '\0')) {
             put("error: no such command with the name '", LIGHT_RED);

@@ -2,13 +2,16 @@
 #define _MV_H
 
 #include "header/shell/user-shell.h"
+#include "header/shell/cp.h"
 
-// User command 'mv'
+// User command 'cd'
 void mv(char args[][512], int args_count);
 
-void rename(char path[], char newName[]);
+void rename(char*, char*);
 
-bool contains_invalid_char(char* dir_name, char invalid_char);
+bool contains_invalid_char(char[],char);
+
+int8_t change_path_mv(char path[][512], int num_of_director);
 
 void move(char args0[], char args1[]);
 

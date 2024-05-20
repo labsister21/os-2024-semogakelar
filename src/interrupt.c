@@ -7,6 +7,33 @@
 #include "header/driver/framebuffer.h"
 #include "header/stdlib/string.h"
 #include "header/driver/keyboard.h"
+#include "header/scheduler/scheduler.h"
+#include "header/cmos/cmos.h"
+
+#define PIT_MAX_FREQUENCY   1193182
+#define PIT_TIMER_FREQUENCY 1000
+#define PIT_TIMER_COUNTER   (PIT_MAX_FREQUENCY / PIT_TIMER_FREQUENCY)
+
+#define PIT_COMMAND_REGISTER_PIO          0x43
+#define PIT_COMMAND_VALUE_BINARY_MODE     0b0
+#define PIT_COMMAND_VALUE_OPR_SQUARE_WAVE (0b011 << 1)
+#define PIT_COMMAND_VALUE_ACC_LOHIBYTE    (0b11  << 4)
+#define PIT_COMMAND_VALUE_CHANNEL         (0b00  << 6) 
+#define PIT_COMMAND_VALUE (PIT_COMMAND_VALUE_BINARY_MODE | PIT_COMMAND_VALUE_OPR_SQUARE_WAVE | PIT_COMMAND_VALUE_ACC_LOHIBYTE | PIT_COMMAND_VALUE_CHANNEL)
+
+#define PIT_CHANNEL_0_DATA_PIO 0x40
+
+void activate_timer_interrupt(void) {
+    __asm__ volatile("cli");
+    // Setup how often PIT fire
+    uint32_t pit_timer_counter_to_fire = PIT_TIMER_COUNTER;
+    out(PIT_COMMAND_REGISTER_PIO, PIT_COMMAND_VALUE);
+    out(PIT_CHANNEL_0_DATA_PIO, (uint8_t) (pit_timer_counter_to_fire & 0xFF));
+    out(PIT_CHANNEL_0_DATA_PIO, (uint8_t) ((pit_timer_counter_to_fire >> 8) & 0xFF));
+
+    // Activate the interrupt
+    out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_TIMER));
+}
 
 
 void io_wait(void) {
@@ -59,7 +86,8 @@ void set_tss_kernel_current_stack(void) {
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
 }
 
-void syscall(struct InterruptFrame frame) {
+void interrupt(struct InterruptFrame frame) {
+    int8_t ret_val = 0;
     switch (frame.cpu.general.eax) {
         case 0:
             *((int8_t*) frame.cpu.general.ecx) = read(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
@@ -74,12 +102,14 @@ void syscall(struct InterruptFrame frame) {
             *((int8_t*) frame.cpu.general.ecx) = Delete(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);    
             break;
         case 4:
-            keyboard_state_activate();
-            __asm__("sti");
-            while (is_keyboard_blocking());
-            char buf[KEYBOARD_BUFFER_SIZE];
-            get_keyboard_buffer(buf);
-            memcpy((char*) frame.cpu.general.ebx, buf, frame.cpu.general.ecx);
+            // while (is_keyboard_blocking()) {
+            //     __asm__ volatile("cli");
+            //     pic_ack(IRQ_TIMER);
+            //     __asm__("sti");
+            // }
+            // char buf[KEYBOARD_BUFFER_SIZE] = {0};
+            get_keyboard_buffer((char*) frame.cpu.general.ebx);
+            // memcpy((char*) frame.cpu.general.ebx, buf, frame.cpu.general.ecx);
             break;
         case 5:
             putchar(*((char*)frame.cpu.general.ebx), frame.cpu.general.ecx);
@@ -104,6 +134,29 @@ void syscall(struct InterruptFrame frame) {
         case 10:
             write_clusters((struct FAT32DirectoryTable*) frame.cpu.general.ebx, frame.cpu.general.ecx, 1);
             break;
+        case 11:
+            terminate_current_process();
+            break;
+        case 12:
+            ret_val = process_create_user_process(*(struct FAT32DriverRequest*) frame.cpu.general.ebx);
+            *(int8_t*) frame.cpu.general.ecx = ret_val;
+            break;
+        case 13:
+            print_active_processes();
+            break;
+        case 14:
+            ret_val = kill_process((uint32_t) frame.cpu.general.ebx);
+            *(int8_t*) frame.cpu.general.ecx = ret_val;
+            break;
+        case 15:
+            print_current_time();
+            break;
+        case 16:
+            keyboard_state_activate();
+            break;
+        case 17:
+            framebuffer_write(frame.cpu.general.ecx, frame.cpu.general.edx, frame.cpu.general.ebx, 0xF, 0x0);
+            break;  
     }
 }
 
@@ -115,8 +168,19 @@ void main_interrupt_handler(struct InterruptFrame frame) {
         case IRQ_KEYBOARD + PIC1_OFFSET:
             keyboard_isr();
             break;
+        case IRQ_TIMER + PIC1_OFFSET:
+            struct Context current_ctx = {
+                .cpu = frame.cpu,
+                .eflags = frame.int_stack.eflags,
+                .eip = frame.int_stack.eip,
+                .page_directory_virtual_addr = paging_get_current_page_directory_addr()
+            };
+            scheduler_save_context_to_current_running_pcb(current_ctx);
+            pic_ack(IRQ_TIMER);
+            scheduler_switch_to_next_process();
+            break;
         case 0x30:
-            syscall(frame);
+            interrupt(frame);
             break;
     }
 }

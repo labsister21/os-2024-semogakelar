@@ -34,8 +34,9 @@ extern const char keyboard_scancode_1_to_ascii_map[256];
 struct KeyboardDriverState {
     bool read_extended_mode;
     bool keyboard_input_on;
-    char keyboard_buffer[KEYBOARD_BUFFER_SIZE];
-    uint8_t buffer_index;
+    // char keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+    // uint8_t buffer_index;
+    char keyboard_input;
 } __attribute((packed));
 
 

@@ -2,8 +2,27 @@ global loader                        ; the entry symbol for ELF
 global load_gdt                      ; load GDT table
 global set_tss_register              ; set tss register to GDT entry
 global kernel_execute_user_program
+global process_context_switch
 extern kernel_setup                  ; kernel C entrypoint
 extern _paging_kernel_page_directory ; kernel page directory
+
+; Define offsets for CPURegister and Context structures
+%define CPU_INDEX_EDI_OFFSET 0
+%define CPU_INDEX_ESI_OFFSET 4
+%define CPU_STACK_EBP_OFFSET 8
+%define CPU_STACK_ESP_OFFSET 12
+%define CPU_GENERAL_EBX_OFFSET 16
+%define CPU_GENERAL_EDX_OFFSET 20
+%define CPU_GENERAL_ECX_OFFSET 24
+%define CPU_GENERAL_EAX_OFFSET 28
+%define CPU_SEGMENT_GS_OFFSET 32
+%define CPU_SEGMENT_FS_OFFSET 36
+%define CPU_SEGMENT_ES_OFFSET 40
+%define CPU_SEGMENT_DS_OFFSET 44
+
+%define CONTEXT_EIP_OFFSET 48
+%define CONTEXT_EFLAGS_OFFSET 52
+%define CONTEXT_PAGE_DIR_OFFSET 56
 
 KERNEL_VIRTUAL_BASE equ 0xC0000000    ; kernel virtual memory
 KERNEL_STACK_SIZE   equ 2097152       ; size of stack in bytes
@@ -23,7 +42,6 @@ align 4             ; the code must be 4 byte aligned
     dd MAGIC_NUMBER ; write the magic number to the machine code,
     dd FLAGS        ; the flags,
     dd CHECKSUM     ; and the checksum
-
 
 ; start of the text (code) section
 section .setup.text 
@@ -99,9 +117,38 @@ kernel_execute_user_program:
     push eax ; Code segment selector (GDT_USER_CODE_SELECTOR), user privilege
     mov  eax, ecx
     push eax ; eip register to jump back
-
+    
     iret
 set_tss_register:
     mov ax, 0x28 | 0 ; GDT TSS Selector, ring 0
     ltr ax
     ret
+
+process_context_switch:
+    mov  eax, 0x20 | 0x3
+    mov  ds, ax
+    mov  es, ax
+    mov  fs, ax
+    mov  gs, ax
+
+    ; Save base address of function argument (ctx)
+    lea ecx, [esp+4]         ; ctx is the first argument, contains pointer to current context
+    push eax
+    mov eax, [ecx + CPU_STACK_ESP_OFFSET]
+    push eax
+    mov eax, [ecx + CONTEXT_EFLAGS_OFFSET]
+    push eax
+    mov  eax, 0x18 | 0x3
+    push eax ; Code segment selector (GDT_USER_CODE_SELECTOR), user privilege
+    mov eax, [ecx + CONTEXT_EIP_OFFSET]
+    push eax
+
+    mov edi, [ecx + CPU_INDEX_EDI_OFFSET]    ; Restore edi
+    mov esi, [ecx + CPU_INDEX_ESI_OFFSET]    ; Restore esi
+    mov ebp, [ecx + CPU_STACK_EBP_OFFSET]    ; Restore ebp
+    mov ebx, [ecx + CPU_GENERAL_EBX_OFFSET]  ; Restore ebx
+    mov edx, [ecx + CPU_GENERAL_EDX_OFFSET]  ; Restore edx
+    mov eax, [ecx + CPU_GENERAL_EAX_OFFSET]  ; Restore eax
+    mov ecx, [ecx + CPU_GENERAL_ECX_OFFSET]  ; Restore ecx
+
+    iret

@@ -3,5 +3,7 @@ extern main
 
 section .text
 _start:
-    call main
-    jmp  $
+	call main
+    mov ebx, eax
+	mov eax, 11   ; Assuming syscall exit is 11
+	int 0x30

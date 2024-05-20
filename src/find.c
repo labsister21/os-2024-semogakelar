@@ -12,7 +12,7 @@ void find(char args[][512], int args_count) {
             put("Usage: mkdir <directory_path>\n", WHITE);
             break;
         case 1:
-            char* goal = args[0];
+            {char* goal = args[0];
             int Queue[2048];
 
             int currCluster = 2;
@@ -47,7 +47,7 @@ void find(char args[][512], int args_count) {
                 put(goal, LIGHT_RED);
                 put("'\n", LIGHT_RED);
             }
-            break;
+            break;}
         default:
             put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
             put("Usage: find <file/directory_name>\n", WHITE);

@@ -91,7 +91,7 @@ void cd(char args[][512], int args_count) {
     switch (args_count) {
         case 0:
             put("error: missing argument\n", LIGHT_RED);
-            put("Usage: cd <directory_path>\n", WHITE);
+            put("Usage: cd <directory_path>\n", LIGHT_GREY);
             break;
         case 1:
             {char path[512][512];
@@ -102,7 +102,7 @@ void cd(char args[][512], int args_count) {
             break;}
         default:
             put("error: too many arguments, expected 1 argument\n", LIGHT_RED);
-            put("Usage: cd <directory_path>\n", WHITE);
+            put("Usage: cd <directory_path>\n", LIGHT_GREY);
             break;
     }
 }

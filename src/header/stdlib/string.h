@@ -70,4 +70,7 @@ size_t strlen(char *str);
 void strclear(void* str, size_t n);
 
 
+// Convert integer of a specific base to string
+char* itoa(int val, int base);
+
 #endif

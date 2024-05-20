@@ -9,17 +9,19 @@ void cp(char args[][512], int args_count) {
             put("Usage: cp <source_file_directory_path> <dest_directory_path>\n", LIGHT_GREY);
             break;
         case 1:
-            put("error: too few arguments, expected 2 argument\n", LIGHT_RED);
+            put("error: too few arguments, expected 2 arguments\n", LIGHT_RED);
             put("Usage: cp <source_file_directory_path> <dest_directory_path>\n", LIGHT_GREY);
             break;
-        default:
+        case 2:
             {char file_path[512][512] = {0}, dest_path[512][512] = {0};
             uint32_t file_num_of_directory = 0, dest_num_of_directory = 0;
             parse_path(args[0], file_path, &file_num_of_directory);
             parse_path(args[1], dest_path, &dest_num_of_directory);
-            
             copy_file(file_path, file_num_of_directory, dest_path, dest_num_of_directory);
             break;}
+        default:
+            put("error: too many arguments, expected 2 arguments\n", LIGHT_RED);
+            put("Usage: cp <source_file_directory_path> <dest_directory_path>\n", LIGHT_GREY);
     }
 }
 
